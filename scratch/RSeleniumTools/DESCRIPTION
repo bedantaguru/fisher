@@ -1,0 +1,24 @@
+Package: RSeleniumTools
+Type: Package
+Title: Additional tools and utilities for RSelenium
+Version: 0.1.0
+Author: Indranil Gayen
+Maintainer: Indranil Gayen <nil.gayen@gmail.com>
+Description: Various Tools for smooth operation on RSelenium.
+    Parallel processing with selenium (Selenium Strom) is the key focus of this package. 
+    In addition to that many utilities like safe element lookup etc are provided for robust web testing.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Imports:
+    storr,
+    purrr,
+    ps,
+    RSelenium,
+    wdman,
+    parallel,
+    xml2,
+    rvest,
+    stringr,
+    rlang
+RoxygenNote: 7.0.2
