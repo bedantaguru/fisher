@@ -87,5 +87,38 @@ remDr$queryRD(
 
 se$process$kill_tree()
 
+# selenium opera
 
+
+# "freedom":{
+#   "proxy_switcher":{
+#     "automatic_connection":true,
+#     "automatic_connection_update_applied":true,
+#     "bytes_transferred":"0",
+#     "enabled":true,
+#     "forbidden":false,
+#     "last_ui_interaction_time":1606768493.430966,
+#     "stats":{"last_date_stored":"13251234600000000","values":["2210922"]},
+#     "ui_visible":true}},
+#
+#
+#
+
+
+# opera try
+
+
+rd <- RSelenium::remoteDriver(browserName = "opera", port = 4567L, extraCapabilities = extraCap)
+
+binman::list_versions("chromedriver")
+
+browseURL(binman::app_dir("chromedriver"))
+
+# mask opera driver
+#  rename opera driver to chrome driver
+# check opera version
+se <- wdman::selenium(check = F, chromever = "74.0.3729.169")
+
+
+rd <- RSelenium::remoteDriver(browserName = "opera", port = 4567L, extraCapabilities = extraCap)
 
