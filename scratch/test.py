@@ -15,7 +15,7 @@ driver.close()
 
 # webdriver.ChromeOptions opt = new webdriver.ChromeOptions();
 
-opt = webdriver.ChromeOptions()
+optc = webdriver.ChromeOptions()
 
 opt = webdriver.opera.options.Options()
 
@@ -37,6 +37,25 @@ opt.add_experimental_option("prefs",
         "enabled":True,
         "forbidden":False,
         "ui_visible":True}}})
+        
+
+opt.set_capability("accept.ssl.certs",True)
+
+opt.add_experimental_option("prefs",
+  {
+    "download.default_directory": "C:\\Users\\Nil\\Downloads\\etc"
+  })
+
+optc.add_experimental_option("prefs",
+  {
+    "download.default_directory": "C:\\Users\\Nil\\Downloads\\etc"
+  })
+
+optc.set_capability("google.chrome.options", optc.to_capabilities())
+
+# optc.
+
+# local router or serving ip
 
 driver = webdriver.Opera(executable_path="C:/Users/Nil/Downloads/operadriver_win64/operadriver.exe", options=opt)
 

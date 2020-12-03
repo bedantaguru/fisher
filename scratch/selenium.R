@@ -117,8 +117,58 @@ browseURL(binman::app_dir("chromedriver"))
 # mask opera driver
 #  rename opera driver to chrome driver
 # check opera version
-se <- wdman::selenium(check = F, chromever = "74.0.3729.169")
+se <- wdman::selenium(check = F, retcommand = T)
 
 
-rd <- RSelenium::remoteDriver(browserName = "opera", port = 4567L, extraCapabilities = extraCap)
+se <- wdman::selenium(
+  check = F,
+  jvmargs = list(
+    opera =
+      paste0(
+        "-Dwebdriver.opera.driver=",
+        normalizePath(
+          "C:/Users/Nil/Downloads/operadriver_win64/operadriver.exe"
+        )
+      )
+  ))
 
+rd <- RSelenium::remoteDriver(browserName = "opera", port = 4567L)
+
+#rd <- RSelenium::remoteDriver(browserName = "opera", port = 4567L, extraCapabilities = extraCap)
+
+
+ps::ps_system_memory()
+ps::ps_cpu_count()
+
+ps::ps_disk_partitions()
+
+ps::ps_children(recursive = T)
+ps::ps_disk_usage()
+
+# need a port listner obj
+
+
+# pref is json
+rjson::fromJSON(file = "C:\\Users\\Nil\\Downloads\\Opera Stable VPN\\Preferences")
+jsonlite::fromJSON(readLines("C:\\Users\\Nil\\Downloads\\Opera Stable VPN\\Preferences", warn = F))
+
+#
+# rjson::toJSON(list( alpha = 1:5, beta = "Bravo",
+#                     gamma = list(a=1:3, b=NULL),
+#                     delta = c(TRUE, FALSE) ))
+
+
+binman::process_yaml("scratch/opera.yml")
+
+# this not happening for
+patch::patch_function(binman::predl_github_assets, "browser_download_url", expr = "hi", chop_locator_to = 4, append_after = T)
+
+require(binman)
+
+predl_github_assets_patch <- patch::patch_function(predl_github_assets, "browser_download_url", expr = {
+  if(length(file)==0)file = NA
+  if(length(url)==0)url = NA
+}, chop_locator_to = 4, append_after = T)
+
+
+binman::process_yaml("scratch/opera_patch.yml")
