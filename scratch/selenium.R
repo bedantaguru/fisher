@@ -160,8 +160,18 @@ jsonlite::fromJSON(readLines("C:\\Users\\Nil\\Downloads\\Opera Stable VPN\\Prefe
 
 binman::process_yaml("scratch/opera.yml")
 
+
+patch::patch_function(binman::predl_github_assets, "data.frame\\(file = file",
+                      expr = {
+                        e <- try(res <- data.frame(file = file, url = url, version = version,
+                                                   platform = plat, stringsAsFactors = FALSE))
+                        if(class(e)=="try-error") browser()
+                      }, move_up_to = 2, replace_it = T, auto_assign_patched_function = T)
+
 # this not happening for
-patch::patch_function(binman::predl_github_assets, "browser_download_url", expr = "hi", chop_locator_to = 4, append_after = T)
+patch::patch_function(binman::predl_github_assets,
+                      "browser_download_url",
+                      expr = "hi", move_up_to = 2, append_after = T)
 
 require(binman)
 
