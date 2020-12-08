@@ -162,6 +162,20 @@ binman::process_yaml("scratch/opera.yml")
 
 
 patch::patch_function(binman::predl_github_assets, "data.frame\\(file = file",
+                      auto_assign_patched_function = T, move_up_to = 2)
+
+
+if(length(file)*length(url)*length(plat) == 0) return(data.frame())
+
+
+patch::patch_function(
+  binman::predl_github_assets,
+  "data.frame\\(file = file",
+  if(length(file)*length(url)*length(plat) == 0) return(data.frame()),
+  modification_placement = "before",
+  move_up_to = 2, auto_assign_patched_function = T)
+
+patch::patch_function(binman::predl_github_assets, "data.frame\\(file = file",
                       expr = {
                         e <- try(res <- data.frame(file = file, url = url, version = version,
                                                    platform = plat, stringsAsFactors = FALSE))
