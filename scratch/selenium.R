@@ -158,41 +158,5 @@ jsonlite::fromJSON(readLines("C:\\Users\\Nil\\Downloads\\Opera Stable VPN\\Prefe
 #                     delta = c(TRUE, FALSE) ))
 
 
-binman::process_yaml("scratch/opera.yml")
 
 
-patch::patch_function(binman::predl_github_assets, "data.frame\\(file = file",
-                      auto_assign_patched_function = T, move_up_to = 2)
-
-
-if(length(file)*length(url)*length(plat) == 0) return(data.frame())
-
-
-patch::patch_function(
-  binman::predl_github_assets,
-  "data.frame\\(file = file",
-  if(length(file)*length(url)*length(plat) == 0) return(data.frame()),
-  modification_placement = "before",
-  move_up_to = 2, auto_assign_patched_function = T)
-
-patch::patch_function(binman::predl_github_assets, "data.frame\\(file = file",
-                      expr = {
-                        e <- try(res <- data.frame(file = file, url = url, version = version,
-                                                   platform = plat, stringsAsFactors = FALSE))
-                        if(class(e)=="try-error") browser()
-                      }, move_up_to = 2, replace_it = T, auto_assign_patched_function = T)
-
-# this not happening for
-patch::patch_function(binman::predl_github_assets,
-                      "browser_download_url",
-                      expr = "hi", move_up_to = 2, append_after = T)
-
-require(binman)
-
-predl_github_assets_patch <- patch::patch_function(predl_github_assets, "browser_download_url", expr = {
-  if(length(file)==0)file = NA
-  if(length(url)==0)url = NA
-}, chop_locator_to = 4, append_after = T)
-
-
-binman::process_yaml("scratch/opera_patch.yml")

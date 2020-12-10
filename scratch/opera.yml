@@ -7,9 +7,9 @@ predlfunction:
     - mac64
     - win32
     - win64
-    history: 3
+    history: 1
     versionregex:
-    - "^v"
+    - "^v\\."
     - ""
     appname: "operadriver"
 dlfunction:

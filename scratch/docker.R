@@ -19,18 +19,21 @@ stevedore::docker_available()
 # https://github.com/krey/protonvpn-docker
 
 
-fun <- function(x, y){
-  if("test" %in% names(x)){
-    y[1] <- x["test"]
-  }
-  z <- x+y
-  if(z[2] == 3){
-    u <- this_loc(Sys.time())
-    z[2] <- u
-  }
-  return(z)
-}
+splashr::install_splash()
+
+splashr::start_splash()
 
 
+pg <- render_html(url = "https://analytics.usa.gov/")
 
 
+require(rvest)
+
+
+splash_local %>%
+  splash_go("https://en.wikipedia.org/wiki/Main_Page") %>%
+  splash_focus("#searchInput") %>%
+  splash_send_text("maine") %>%
+  splash_send_keys("<Return>") %>%
+  splash_wait() %>%
+  splash_png() -> wiki_png
