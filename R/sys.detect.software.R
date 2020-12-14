@@ -1,16 +1,5 @@
 
 
-check_system_os <- function(){
-  os <- .Platform$OS.type
-  if(os=="unix"){
-    if (grepl("^darwin", R.version$os))
-      os <- "osx"
-    if (grepl("linux-gnu", R.version$os))
-      os <- "linux"
-  }
-  os
-}
-
 
 safe_reg_read_win <- function(key = "SOFTWARE\\Microsoft",
                               hive = c("HCU","HLM", "HCR", "HU", "HCC", "HPD"),
