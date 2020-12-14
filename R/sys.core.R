@@ -24,7 +24,7 @@ sys_os_alt_names <- function(osn){
 }
 
 # it's like base::UseMethod but for specific OS
-sys_use_os_specific_method <- function(fname,...){
+sys_use_os_specific_method <- function(fname){
   os <- sys_get_os()
   call_f_name <- paste0(fname, "_", os)
   found <- FALSE
@@ -48,7 +48,7 @@ sys_use_os_specific_method <- function(fname,...){
   }
 
   if(found){
-    do.call(call_f_name, args = list(...))
+    do.call(call_f_name, args = as.list(sys.frame(sys.parent())))
   }else{
     stop(paste0("No method named '", fname,"' found for OS ", os),call. = FALSE)
   }

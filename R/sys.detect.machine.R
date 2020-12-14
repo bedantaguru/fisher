@@ -17,5 +17,27 @@ sys_get_os_arch <- function(){
 
 sys_get_os_arch_win <- function(){
   co <- sys_cmd("wmic os get osarchitecture")
+  bit <- "unknown"
+  if(any(grepl("64-bit", tolower(co)))){
+    bit <- "64"
+  }else{
+    if(any(grepl("32-bit", tolower(co)))){
+      bit <- "32"
+    }
+  }
+  bit
+}
 
+
+sys_get_os_arch_unix <- function(){
+  co <- sys_cmd("uname -a")
+  bit <- "unknown"
+  if(any(grepl("x86_64", tolower(co)))){
+    bit <- "64"
+  }else{
+    if(any(grepl("i686", tolower(co)))){
+      bit <- "32"
+    }
+  }
+  bit
 }
