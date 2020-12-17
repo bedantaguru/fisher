@@ -37,3 +37,22 @@ splash_local %>%
   splash_send_keys("<Return>") %>%
   splash_wait() %>%
   splash_png() -> wiki_png
+
+
+
+
+# Hi,
+# Just managed to overcome connectivity issues on my Windows 10 Ubuntu (WSL 2).
+#
+# Altering the following setting:
+#   Comodo -> Advanced Settings -> Firewall -> Global Rules -> Block IP in Any To MAC Any Where Protocol is Any
+# by excluding the vEthernet (WSL) from this rule (please see attached screenshot),
+# allowed sudo apt update to execute successfully.
+
+#
+# ht click at the server box, select Add, enter any of following new host listed below, and click OK.
+#
+# http://cdn.download.comodo.com/
+#   http://downloads.comodo.com/
+#   http://download-cn.comodo.com/
+#
