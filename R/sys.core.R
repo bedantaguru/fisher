@@ -24,6 +24,7 @@ sys_os_alt_names <- function(osn){
 }
 
 # it's like base::UseMethod but for specific OS
+# Proto: https://stackoverflow.com/questions/65287106
 sys_use_os_specific_method <- function(fname){
   os <- sys_get_os()
   call_f_name <- paste0(fname, "_", os)
