@@ -14,7 +14,7 @@
 # TODO: options to edit R Startup options
 # TODO: history check for last used case (".Rhistory") (on in other module!)
 persistent_object_store <- function(
-  appname,
+  appname = "fisher",
   authname = "rudra",
   scope = c("auto","user","project")
 ){
@@ -65,26 +65,58 @@ persistent_object_store <- function(
   handle$store_path <- store_dir
   handle$file_mode <- d_mode
 
-  handle$write <- function(what, value){
+  handle$write <- function(what, value, lst){
     if(!dir.exists(store_dir)){
       dir.create(store_dir, recursive = TRUE)
     }
+    if(!missing(lst)){
+      what <- names(lst)
+      value <- unlist(lst)
+    }
     fn <- file.path(store_dir, what)
-    tryCatch(
-      writeLines(value, fn),
-      error = function(e) NULL)
+    lapply(
+      seq_along(fn),
+      function(i){
+        tryCatch(
+          writeLines(value[i], fn[i]),
+          error = function(e) NULL)
+      }
+    )
     invisible(0)
   }
 
-  handle$read <- function(what){
-
-    fn <- file.path(store_dir, what)
+  handle$read <- function(what, all = FALSE){
 
     v <- NULL
 
-    if(file.exists(fn)){
-      v <- readLines(fn)
+    if(all){
+      afs <- list.files(store_dir)
+      if(length(afs)>0){
+        what <- afs
+      }else{
+        # early exit
+        return(invisible(v))
+      }
     }
+
+    fn <- file.path(store_dir, what)
+
+
+    if(all){
+      v <- lapply(
+        seq_along(fn),
+        function(i){
+          # file will be present for sure
+          readLines(fn[i])
+        }
+      )
+      names(v) <- what
+    }else{
+      if(file.exists(fn)){
+        v <- readLines(fn)
+      }
+    }
+
 
     invisible(v)
   }
@@ -99,6 +131,7 @@ persistent_object_store <- function(
     if(dir.exists(store_dir)){
       ifelse(interactive(), isFALSE(utils::browseURL(store_dir)), TRUE)
     }
+    invisible(0)
   }
 
   invisible(handle)

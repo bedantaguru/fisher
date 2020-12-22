@@ -1,5 +1,12 @@
 
 
+
+sys_check_web_browsers <- function(){
+  sys_use_os_specific_method("sys_check_web_browsers")
+}
+
+
+
 ## windows
 
 sys_reg_read_win <- function(key = "SOFTWARE",
@@ -89,7 +96,7 @@ sys_check_web_browsers_windows <- function(){
     blst
 
   }else{
-    invisible(0)
+    invisible(list())
   }
 }
 

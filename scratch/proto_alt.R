@@ -91,3 +91,22 @@ g()
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+f <- function(e) dir.create("Clean", showWarnings = F)
+g <- function(x){ e <- asNamespace("fisher"); reg.finalizer(e, f, onexit = T) }
+g()
+invisible(gc()) # trigger cleanup
+
+
