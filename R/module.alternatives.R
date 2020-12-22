@@ -32,6 +32,16 @@ get_method_name_for_alternatives <- function(){
   }
 }
 
+alternatives_dispatch_style_naming <- function(
+  method_name
+){
+  list(
+    alt_name <- paste0(method_name,"_alt_"),
+    alt_dep_name <- paste0(method_name,"_altDep_"),
+    alt_meta_name <- paste0(method_name,"_altMeta_")
+  )
+}
+
 search_alternatives <- function(
   method_name
 ){

@@ -36,7 +36,7 @@ filter_alt_dplyr <- function(...){
 }
 
 # dependency of an alternative method may be mentioned in following way
-# method_name then _altDep_ then alternative name
+# method_name then _altMeta_ then alternative name
 # 1) it should have no argument
 # 2) it should check and report the requirements (possibly other meta info)
 #   this should return a list with requirements
@@ -52,7 +52,7 @@ filter_alt_dplyr <- function(...){
 # - these two are alternatives specific
 # - capabilities or cap : performing same work, similar work, diverse scope etc.
 # - meta : Who wrote it, other meta info
-filter_altDep_dplyr <- function(){
+filter_altMeta_dplyr <- function(){
   list(
     packages = c("dplyr"),
     system = list(
