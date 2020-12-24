@@ -3,15 +3,20 @@
 ############################ may need to migrate to different place ############
 
 # @Dev
-
 # copied from tidycells
+# latest version is present in tidycells_nightly
+# migrate to filetools or similar package
 
 is_txt_file <- function(fn) {
+  # it's a directory
+  if(dir.exists(fn)) return(FALSE)
   f <- file(fn, "rb", raw = TRUE)
   bytes <- readBin(f, "int", 1000, size = 1, signed = FALSE)
   close(f)
   return(max(bytes) <= 128)
 }
+
+
 
 
 ####################################
@@ -30,31 +35,81 @@ rst_binman_apps <- function(){
 
 
 rst_binman_app_details <- function(app_name){
-  lvs <- binman::list_versions(app_name)
+  # this is not required :
+  # lvs <- binman::list_versions(app_name)
+  ad <- binman::app_dir(app_name)
 
+  plat_details <- function(plat){
+    vers <- list.files(file.path(ad, plat))
+    do.call(rbind, lapply(vers, ver_details, plat = plat))
+  }
+
+  ver_details <- function(ver, plat){
+    fls <- list.files(
+      file.path(ad, plat, ver),
+      full.names = TRUE,
+      recursive = TRUE
+    )
+    fl_zips <- list.files(
+      file.path(ad, plat, ver),
+      pattern =  "\\.zip$",
+      full.names = TRUE
+    )
+
+    dout <- data.frame(app = app_name, platform = plat, version = ver)
+
+    dout$zip_present <- (length(fl_zips) > 0)
+
+    dout$bin_present <- FALSE
+    dout$bin_file <- NA
+    dout$multi_bin <- FALSE
+
+    fl_non_zips <- setdiff(fls, fl_zips)
+
+    if(length(fl_non_zips)>0){
+      fl_non_zips_chk <- sapply(fl_non_zips, is_txt_file)
+
+      fl_non_zips_bin <- fl_non_zips[!fl_non_zips_chk]
+
+      if(length(fl_non_zips_bin)>0){
+        dout$bin_present <- TRUE
+        dout$bin_file <- normalizePath(fl_non_zips_bin[1], winslash = "/")
+        dout$multi_bin <- length(fl_non_zips_bin)>1
+      }
+    }
+
+    dout
+  }
+
+  plats <- list.files(ad)
+
+  do.call(rbind, lapply(plats, plat_details))
+
+}
+
+
+rst_binman_all_apps_details <- function(){
+  bna <-rst_binman_apps()
+
+  do.call(rbind, lapply(bna, rst_binman_app_details))
 }
 
 rst_binman_apps_diag <- function(){
-  bna <-rst_binman_apps()
-  chk_a_app <- function(an){
-    binman::list_versions(an)
+  # binman app details : bad
+  bad <- rst_binman_all_apps_details()
 
-  }
-  state <- lapply(
-    bna,
-    function(an){
 
-      !isTRUE(
-        tryCatch(
-          chk_a_app(an),
-          error=function(e){
-            TRUE
-          }
-        )
-      )
-    }
-  )
 }
+
+
+# @Dev
+# firefox check
+# https://firefox-source-docs.mozilla.org/testing/geckodriver/Support.html
+
+rst_binman_fuse_src <- function(){
+
+}
+
 
 # rst: {RSelenium} Tools
 # alt names

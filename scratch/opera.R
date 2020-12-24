@@ -1,6 +1,28 @@
 
 
 
+base_url <- "https://api.github.com/repos/operasoftware/operachromiumdriver/releases"
+
+jorig <- jsonlite::fromJSON(base_url)
+
+al <- sapply(jorig[["assets"]], length)
+
+jorig <- jorig[al>0,]
+
+tj <- tempfile(fileext = ".json")
+
+writeLines(jsonlite::toJSON(jorig), tj)
+
+
+binman::predl_github_assets(base_url, platform = "win32", history = 1L, appname = "test")
+binman::predl_github_assets(tj, platform = "win32", history = 1L, appname = "test")
+
+
+
+
+
+
+
 get_os_arch <- function(pre=""){
   # check help: help(.Machine)
   paste0(pre, c("32", "64")[.Machine$sizeof.pointer/4])
