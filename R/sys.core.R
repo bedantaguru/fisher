@@ -1,6 +1,6 @@
 
-
-
+# End (Middle) User Function
+# in 3 known OS (windows, osx, linux)
 sys_get_os <- function(){
   os <- .Platform$OS.type
   os <- ifelse(is.null(os),"unknown",os[1])
@@ -22,6 +22,39 @@ sys_os_alt_names <- function(osn){
     osn
   )
 }
+
+sys_os_arch_alt_names <- function(arn){
+  switch (
+    arn,
+    `64` = c("64","x64","x86_64","amd64"),
+    `32` = c("32","x86","i686","i386"),
+    arn
+  )
+}
+
+
+sys_all_os_valid_names <- function(with_arch = FALSE){
+
+  os_names <- unique(
+    unlist(
+      lapply(c("windows","osx","linux"),
+             sys_os_alt_names)
+    )
+  )
+
+  if(with_arch){
+    arch_names <- unique(
+      unlist(
+        lapply(c("32","64"),
+               sys_os_arch_alt_names)
+      )
+    )
+
+    os_names <- unique(apply(expand.grid(os_names, arch_names), 1, paste0, collapse = ""))
+  }
+  invisible(os_names)
+}
+
 
 # it's like base::UseMethod but for specific OS
 # Proto: https://stackoverflow.com/questions/65287106

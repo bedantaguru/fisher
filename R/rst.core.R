@@ -115,10 +115,6 @@ rst_binman_apps_diag <- function(){
 }
 
 
-# @Dev
-# firefox check
-# https://firefox-source-docs.mozilla.org/testing/geckodriver/Support.html
-
 
 
 
