@@ -93,6 +93,17 @@ sys_check_web_browsers_windows <- function(){
       )
     }
 
+
+    if(any(grepl("edge", bnames))){
+
+      # check edge version
+      ch <- sys_reg_read_win("Software\\Microsoft\\Edge\\BLBeacon", hive = "HCU")[["version"]]
+
+      blst$edge <- list(
+        installed_version = ifelse(is.null(ch), NA, ch)
+      )
+    }
+
     blst
 
   }else{

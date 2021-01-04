@@ -7,38 +7,90 @@
 # https://firefox-source-docs.mozilla.org/testing/geckodriver/Support.html
 # https://developer.microsoft.com/en-us/microsoft-edge/tools/webdriver/
 
-# edge drivers
-# https://msedgedriver.azureedge.net/
 
-rst_webdriver_edge_url_parser <- function(edge_url = "https://msedgedriver.azureedge.net/"){
+rst_webdriver_url_parser <- function(src_url){
 
-  # details
-  # https://developer.microsoft.com/en-us/microsoft-edge/tools/webdriver/
-  u <- xml2::read_xml(edge_url)
-  dl_name <- rvest::html_text(rvest::html_nodes(rvest::html_nodes(u, "Blob"), "Name"))
-  dl_urls <- rvest::html_text(rvest::html_nodes(rvest::html_nodes(u, "Blob"), "Url"))
-  n <- min(length(dl_name), length(dl_urls))
+  raw <- NULL
 
-  invisible(data.frame(Name = dl_name[seq(n)], URL = dl_urls[seq(n)]))
+  if(grepl("www.googleapis.com", src_url)){
+    raw <- rst_webdriver_json_url_parser_googleapis(src_url)
+  }else{
+    if(grepl("api.github.com", src_url)){
+      raw <- rst_webdriver_json_url_parser_github(src_url)
+    }else{
+      if(grepl("msedgedriver.azureedge.net", src_url)){
+        raw <- rst_webdriver_edge_url_parser(src_url)
+      }else{
+        stop("Unknwon source", call. = FALSE)
+      }
+    }
+  }
+
+  if(!is.data.frame(raw)){
+    stop("Unable to fetch from source URL", call. = FALSE)
+  }
+
+
+  must_cols <- c(
+    "time_idx",
+    "appname",
+    "appname_from_url",
+    "version",
+    "is_zip",
+    "is_jar",
+    "platform_tag",
+    "is_valid_platform",
+    "file",
+    "url"
+  )
+
+  all_plat <- unique(raw[must_cols])
+  all_plat <- all_plat[all_plat$is_zip | all_plat$is_jar ,]
+  all_plat <- all_plat[all_plat$is_valid_platform,]
+
+  all_plat$for_this_platform <- sys_valid_os_string(
+    all_plat$platform_tag,
+    this_machine = TRUE
+  )
+
+  all_plat$for_this_platform_belowbit <- sys_valid_os_string(
+    all_plat$platform_tag,
+    this_machine = TRUE,
+    allow_lowbit = TRUE
+  )
+
+
+  invisible(
+    list(
+      core = all_plat,
+      raw = raw
+    )
+  )
+
 }
 
-rst_webdriver_json_url_parser <- function(src_url){
-  # 3 kinds of URL at this moment
-  # www.googleapis.com api.github.com api.bitbucket.org
-  # Following are specific urls
-  # https://www.googleapis.com/storage/v1/b/chromedriver/o
-  # https://www.googleapis.com/storage/v1/b/selenium-release/o
-  # https://www.googleapis.com/storage/v1/b/selenium-release/o
-  # https://api.github.com/repos/mozilla/geckodriver/releases
-  # https://api.github.com/repos/operasoftware/operachromiumdriver/releases
-  # https://api.bitbucket.org/2.0/repositories/ariya/phantomjs/downloads?pagelen=100
 
 
-
-}
-
+# JSON URL parser
+# 3 kinds of JSON URL at this moment
+# www.googleapis.com api.github.com api.bitbucket.org
+# Following are specific urls (bitbucket not implemented)
+# https://www.googleapis.com/storage/v1/b/chromedriver/o
+# https://www.googleapis.com/storage/v1/b/selenium-release/o
+# https://www.googleapis.com/storage/v1/b/selenium-release/o
+# https://api.github.com/repos/mozilla/geckodriver/releases
+# https://api.github.com/repos/operasoftware/operachromiumdriver/releases
+# https://api.bitbucket.org/2.0/repositories/ariya/phantomjs/downloads?pagelen=100
 
 rst_webdriver_json_url_parser_github <- function(src_url){
+
+  pre_app_name <- basename(
+    dirname(
+      rev(
+        strsplit(src_url, "api.github.com")[[1]]
+      )[1]
+    )
+  )
 
   jorig <- jsonlite::fromJSON(src_url)
   al <- sapply(jorig$assets, length)
@@ -58,18 +110,59 @@ rst_webdriver_json_url_parser_github <- function(src_url){
       d <- merge(d1, d2, by = "jk", all = TRUE, suffixes = c("",".assets"))
       d$jk <- NULL
 
-      # @Dev
-      # bad hack for duplicate 'row.names' are not allowed
-      row.names(d)<-paste0(i,"_",seq(nrow(d)))
+      # price to pay for base rbind
+      # can be solved using bind_rows
+      lstcol <- names(which(sapply(d, is.list)))
+      d <- d[setdiff(colnames(d), lstcol)]
+
       d
     }
   )
 
   ads <- do.call("rbind", ads)
 
+  ads$releases_url <- ads$url
+  ads$is_zip <- grepl(".zip$",ads$name.assets)
+  ads$is_jar <- grepl(".jar$",ads$name.assets)
+
+  ads$appname <- sapply(
+    strsplit(
+      gsub(".zip$|.jar$","",ads$name.assets), "_"
+    ),
+    function(x) x[1]
+  )
+  ads$appname_from_url <-  pre_app_name
+  ads$platform_tag <- NA
+
+  if(any(ads$is_zip)){
+    platforms <- sapply(
+      strsplit(
+        gsub(".zip$","",ads$name.assets[ads$is_zip]), "_"
+      ),
+      function(x) rev(x)[1]
+    )
+    ads$platform_tag[ads$is_zip] <- platforms
+  }
+
+  if(any(ads$is_jar)){
+    ads$platform_tag[ads$is_jar] <- "generic"
+  }
+
+  ads$is_valid_platform <- sys_valid_os_string(ads$platform_tag)
+  ads$is_valid_platform <- ads$is_valid_platform | (ads$platform_tag == "generic")
+
+  ads$url <- ads$browser_download_url
+
+  ads$version <- gsub("^[^0-9]+","",ads$tag_name)
+
+  ads$time_idx <- ads$id.assets
+
+
+  ads$file <- basename(ads$name.assets)
+
+  ads
+
 }
-
-
 
 rst_webdriver_json_url_parser_googleapis <- function(src_url){
   pre_app_name <- basename(
@@ -106,7 +199,7 @@ rst_webdriver_json_url_parser_googleapis <- function(src_url){
   }
 
   jitems$appname <- sapply(jitems$name, get_app_name)
-  jitems$appname_match <-  jitems$appname == pre_app_name
+  jitems$appname_from_url <-  pre_app_name
   jitems$platform_tag <- NA
 
   # platform detection from src
@@ -137,8 +230,58 @@ rst_webdriver_json_url_parser_googleapis <- function(src_url){
 
 }
 
-rst_webdriver_json_url_parser_bitbucket <- function(src_url){
-  # is it required?
-  # only PhantomJS (which is almost dead)
-  jorig <- jsonlite::fromJSON(src_url)
+
+# edge drivers
+# https://msedgedriver.azureedge.net/
+
+rst_webdriver_edge_url_parser <- function(edge_url = "https://msedgedriver.azureedge.net/"){
+
+  pre_app_name <- "edgedriver"
+
+  # details
+  # https://developer.microsoft.com/en-us/microsoft-edge/tools/webdriver/
+  u <- xml2::read_xml(edge_url)
+  dl_name <- rvest::html_text(rvest::html_nodes(rvest::html_nodes(u, "Blob"), "Name"))
+  dl_urls <- rvest::html_text(rvest::html_nodes(rvest::html_nodes(u, "Blob"), "Url"))
+  n <- min(length(dl_name), length(dl_urls))
+
+  dl <- data.frame(Name = dl_name[seq(n)], URL = dl_urls[seq(n)])
+
+  dl$is_zip <- grepl(".zip$",dl$Name)
+  dl$is_jar <- grepl(".jar$",dl$Name)
+
+  dl$appname <- sapply(
+    strsplit(
+      gsub(".zip$|.jar$","",basename(dl$Name)), "_"
+    ),
+    function(x) x[1]
+  )
+
+  dl$appname_from_url <- pre_app_name
+
+  dl$platform_tag <- NA
+
+  if(any(dl$is_zip)){
+    platforms <- sapply(
+      strsplit(
+        gsub(".zip$","",dl$Name[dl$is_zip]), "_"
+      ),
+      function(x) rev(x)[1]
+    )
+    dl$platform_tag[dl$is_zip] <- platforms
+  }
+
+  dl$is_valid_platform <- sys_valid_os_string(dl$platform_tag)
+  dl$url <- dl$URL
+  dl$URL <- NULL
+
+  dl$version <- gsub("^[^0-9]+","",dirname(dl$Name))
+
+  dl$time_idx <- seq(dl$Name)
+
+
+  dl$file <- basename(dl$Name)
+
+
+  dl
 }
