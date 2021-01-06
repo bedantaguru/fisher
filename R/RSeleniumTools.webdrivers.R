@@ -8,6 +8,19 @@
 # https://developer.microsoft.com/en-us/microsoft-edge/tools/webdriver/
 
 
+rst_webdriver_online_info <- function(browser){
+  browser <- match.arg(
+    browser,
+    choices = c(
+      "chrome",
+      "firefox",
+      "edge",
+      "opera"
+    )
+  )
+
+}
+
 rst_webdriver_url_parser <- function(src_url){
 
   raw <- NULL
@@ -48,6 +61,10 @@ rst_webdriver_url_parser <- function(src_url){
   all_plat <- all_plat[all_plat$is_zip | all_plat$is_jar ,]
   all_plat <- all_plat[all_plat$is_valid_platform,]
 
+  # version fix
+  all_plat$version <- gsub("[^0-9.]","",all_plat$version)
+  all_plat$version_num <- numeric_version(all_plat$version)
+
   all_plat$for_this_platform <- sys_valid_os_string(
     all_plat$platform_tag,
     this_machine = TRUE
@@ -68,7 +85,6 @@ rst_webdriver_url_parser <- function(src_url){
   )
 
 }
-
 
 
 # JSON URL parser
@@ -127,7 +143,7 @@ rst_webdriver_json_url_parser_github <- function(src_url){
 
   ads$appname <- sapply(
     strsplit(
-      gsub(".zip$|.jar$","",ads$name.assets), "_"
+      gsub(".zip$|.jar$","",ads$name.assets), "_|-"
     ),
     function(x) x[1]
   )
@@ -137,7 +153,7 @@ rst_webdriver_json_url_parser_github <- function(src_url){
   if(any(ads$is_zip)){
     platforms <- sapply(
       strsplit(
-        gsub(".zip$","",ads$name.assets[ads$is_zip]), "_"
+        gsub(".zip$","",ads$name.assets[ads$is_zip]), "_|-"
       ),
       function(x) rev(x)[1]
     )
