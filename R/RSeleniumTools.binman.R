@@ -77,10 +77,44 @@ rst_binman_apps_diag <- function(){
   # binman app details : bad
   bad <- rst_binman_all_apps_details()
 
-
 }
 
+rst_binman_ensure_all_webdrivers <- function(){
+  webdrivers <- rst_webdriver_online_info()
+  # bf: binman format
+  webdrivers_bf <- webdrivers
+  webdrivers_bf$appname[
+    webdrivers_bf$appname == "selenium-server-standalone"
+  ] <- "seleniumserver"
 
+  webdrivers_bf <- split(webdrivers_bf, webdrivers_bf$appname)
+
+  for_a_node <- function(nn){
+
+    dl <- binman::assign_directory(
+      split(nn[c("version","url","file")],nn$platform_tag),
+      appname = nn$appname[1]
+    )
+
+    is_jar <- any(grepl(".jar$",nn$file))
+
+    dl2 <- binman::download_files(dl)
+
+    if(is_jar){
+      binman::noproc_dlfiles(dl2)
+    }else{
+      binman::unziptar_dlfiles(dl2, chmod = TRUE)
+    }
+
+  }
+
+  lapply(
+    webdrivers_bf,
+    for_a_node
+  )
+
+
+}
 
 
 

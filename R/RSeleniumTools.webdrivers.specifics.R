@@ -70,7 +70,8 @@ rst_webdriver_specific_firefox <- function(fver){
 
   info <- list(
     driver_url = "https://api.github.com/repos/mozilla/geckodriver/releases",
-    compatibility = "https://firefox-source-docs.mozilla.org/testing/geckodriver/Support.html"
+    compatibility =
+      "https://firefox-source-docs.mozilla.org/testing/geckodriver/Support.html"
   )
 
   fver_n <- numeric_version(
@@ -129,7 +130,21 @@ rst_webdriver_specific_edge <- function(ever){
     gsub("[^0-9.]","", ever)
   )
 
-  driver_web_info <- rst_webdriver_url_parser(info$driver_url)
+  # direct query mechanism for edge only
+  # https://msedgewebdriverstorage.z22.web.core.windows.net/?prefix={ever}/
+  # like
+  # https://msedgewebdriverstorage.z22.web.core.windows.net/?prefix=84.0.512.0/
+
+  driver_web_info <- rst_webdriver_url_parser(
+    paste0("edgedriver_direct_query_", as.character(ever_n))
+  )
+
+  if(nrow(driver_web_info$core)==0){
+    # direct query failed
+    # try to read whole / available records
+    driver_web_info <- rst_webdriver_url_parser(info$driver_url)
+  }
+
 
   # exact match
   driver_web_info$core$for_this_browser <-
@@ -171,6 +186,97 @@ rst_webdriver_specific_opera <- function(over){
   driver_web_info$core$for_this_browser <-
     as.numeric(driver_web_info$core$version_num[,1]) ==
     as.numeric(over_n[1,1])-58+71
+
+  rst_webdriver_specific_finalizer(driver_web_info, info)
+
+
+}
+
+# technically it is not webdriver (it is selenium itself)
+# sver can be stable, dev, both
+rst_webdriver_specific_selenium <- function(sver = "both"){
+
+  sver <- match.arg(sver, choices = c("both","dev","stable"))
+
+  info <- list(
+    driver_url = "https://www.googleapis.com/storage/v1/b/selenium-release/o",
+    compatibility = "https://www.selenium.dev/"
+  )
+
+  driver_web_info <- rst_webdriver_url_parser(info$driver_url)
+
+  driver_web_info$core <- driver_web_info$core[
+    driver_web_info$core$appname == "selenium-server-standalone",
+  ]
+
+  driver_web_info$core$version <- gsub(
+    "selenium-server-standalone-|.jar","",
+    driver_web_info$core$file)
+
+  driver_web_info$core$version_num <- numeric_version(
+    gsub(
+      "[^0-9.]","",
+      gsub("alpha|beta","0.",driver_web_info$core$version)
+    )
+  )
+
+  if(sver == "stable" | sver == "both"){
+
+    # as on 06-01-2021
+    stablev_last_known <- numeric_version("3.141.59")
+    stablev <- numeric_version("3.141.59")
+    try({
+      # try to update
+      wc <- readLines("https://www.selenium.dev/downloads/", warn = FALSE)
+      wc <- tolower(wc)
+      wc <- wc[grepl("latest stable version", wc)]
+      # very bad way
+      stablev <-
+        numeric_version(
+          strsplit(
+            strsplit(
+              strsplit(
+                wc,"latest stable version")[[1]][2],
+              "</a>")[[1]][1],
+            ">")[[1]][2]
+        )
+    }, silent = TRUE)
+
+    driver_web_info$core$for_this_browser <-
+      driver_web_info$core$version_num == stablev
+    if(!any(driver_web_info$core$for_this_browser)){
+      # this should match 1
+      driver_web_info$core$for_this_browser <-
+        driver_web_info$core$version_num == stablev_last_known
+    }
+
+    # special case of sver == "both"
+    if(sver == "both"){
+      st <- rst_webdriver_specific_finalizer(driver_web_info, info)
+
+      driver_web_info$core$for_this_browser <- TRUE
+      lat <- rst_webdriver_specific_finalizer(driver_web_info, info)
+
+      comb <- list(
+        this_driver_info = unique(
+          rbind(
+            st$this_driver_info,
+            lat$this_driver_info
+          )),
+        info = st$info,
+        all_driver_info = st$all_driver_info
+      )
+      # early exit
+      return(comb)
+    }
+
+  }
+
+  if(sver == "dev"){
+    # pick latest
+    driver_web_info$core$for_this_browser <- TRUE
+  }
+
 
   rst_webdriver_specific_finalizer(driver_web_info, info)
 
