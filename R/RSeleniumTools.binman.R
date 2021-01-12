@@ -38,6 +38,7 @@ rst_binman_app_details <- function(app_name){
     dout <- data.frame(app = app_name, platform = plat, version = ver)
 
     dout$zip_present <- (length(fl_zips) > 0)
+    dout$zip_file <- fl_zips[1]
 
     dout$bin_present <- FALSE
     dout$bin_file <- NA
@@ -79,7 +80,7 @@ rst_binman_apps_diag <- function(){
 
 }
 
-rst_binman_ensure_all_webdrivers <- function(){
+rst_binman_ensure_webdrivers <- function(){
   webdrivers <- rst_webdriver_online_info()
   # bf: binman format
   webdrivers_bf <- webdrivers

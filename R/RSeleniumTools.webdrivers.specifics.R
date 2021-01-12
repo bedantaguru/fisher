@@ -14,7 +14,9 @@ rst_webdriver_specific_finalizer <- function(driver_web_info, info){
       driver_web_info$core$for_this_platform_belowbit &
       driver_web_info$core$for_this_browser
   }
-  if(!any(driver_web_info$core$for_this_system)){
+
+  if(!isTRUE(info$offline) &
+     !any(driver_web_info$core$for_this_system)){
     stop(paste0(
       "No compatible webdriver found. Please check:",
       info$compatibility
@@ -37,14 +39,16 @@ rst_webdriver_specific_finalizer <- function(driver_web_info, info){
 
   this_d <- driver_web_info$core[driver_web_info$core$this_one,]
 
-  this_d <- this_d[1,]
+  if(nrow(this_d)>1){
+    this_d <- this_d[1,]
+  }
 
   list(this_driver_info = this_d,
        info = info,
        all_driver_info = driver_web_info)
 }
 
-rst_webdriver_specific_chrome <- function(cver){
+rst_webdriver_specific_chrome <- function(cver, offline_info = NULL){
 
   info <- list(
     driver_url = "https://www.googleapis.com/storage/v1/b/chromedriver/o",
@@ -56,7 +60,25 @@ rst_webdriver_specific_chrome <- function(cver){
   )
   # thumb rule major version should match
 
-  driver_web_info <- rst_webdriver_url_parser(info$driver_url)
+  do_offline <- FALSE
+  if(is.data.frame(offline_info)){
+    if(nrow(offline_info)>0){
+      do_offline <- TRUE
+      info$offline <- TRUE
+    }
+  }
+  if(do_offline){
+    driver_web_info <- rst_webdriver_url_parser(offline_info, offline = TRUE)
+  }else{
+    driver_web_info <- rst_webdriver_url_parser(info$driver_url)
+  }
+
+  driver_web_info$core <- driver_web_info$core[
+    driver_web_info$core$appname == "chromedriver",
+  ]
+
+  # early exit
+  if(nrow(driver_web_info$core)==0) return(NULL)
 
   driver_web_info$core$for_this_browser <-
     as.numeric(driver_web_info$core$version_num[,1]) == as.numeric(cver_n[1,1])
@@ -66,7 +88,7 @@ rst_webdriver_specific_chrome <- function(cver){
 
 }
 
-rst_webdriver_specific_firefox <- function(fver){
+rst_webdriver_specific_firefox <- function(fver, offline_info = NULL){
 
   info <- list(
     driver_url = "https://api.github.com/repos/mozilla/geckodriver/releases",
@@ -86,7 +108,25 @@ rst_webdriver_specific_firefox <- function(fver){
     stop("Firefox is really old. please update!", call. = FALSE)
   }
 
-  driver_web_info <- rst_webdriver_url_parser(info$driver_url)
+  do_offline <- FALSE
+  if(is.data.frame(offline_info)){
+    if(nrow(offline_info)>0){
+      do_offline <- TRUE
+      info$offline <- TRUE
+    }
+  }
+  if(do_offline){
+    driver_web_info <- rst_webdriver_url_parser(offline_info, offline = TRUE)
+  }else{
+    driver_web_info <- rst_webdriver_url_parser(info$driver_url)
+  }
+
+  driver_web_info$core <- driver_web_info$core[
+    driver_web_info$core$appname == "geckodriver",
+  ]
+
+  # early exit
+  if(nrow(driver_web_info$core)==0) return(NULL)
 
   driver_web_info$core$for_this_browser <- TRUE
 
@@ -118,7 +158,7 @@ rst_webdriver_specific_firefox <- function(fver){
 
 }
 
-rst_webdriver_specific_edge <- function(ever){
+rst_webdriver_specific_edge <- function(ever, offline_info = NULL){
 
   info <- list(
     driver_url = "https://msedgedriver.azureedge.net/",
@@ -135,15 +175,35 @@ rst_webdriver_specific_edge <- function(ever){
   # like
   # https://msedgewebdriverstorage.z22.web.core.windows.net/?prefix=84.0.512.0/
 
-  driver_web_info <- rst_webdriver_url_parser(
-    paste0("edgedriver_direct_query_", as.character(ever_n))
-  )
 
-  if(nrow(driver_web_info$core)==0){
-    # direct query failed
-    # try to read whole / available records
-    driver_web_info <- rst_webdriver_url_parser(info$driver_url)
+  do_offline <- FALSE
+  if(is.data.frame(offline_info)){
+    if(nrow(offline_info)>0){
+      do_offline <- TRUE
+      info$offline <- TRUE
+    }
   }
+  if(do_offline){
+    driver_web_info <- rst_webdriver_url_parser(offline_info, offline = TRUE)
+  }else{
+    driver_web_info <- rst_webdriver_url_parser(
+      paste0("edgedriver_direct_query_", as.character(ever_n))
+    )
+
+    if(nrow(driver_web_info$core)==0){
+      # direct query failed
+      # try to read whole / available records
+      driver_web_info <- rst_webdriver_url_parser(info$driver_url)
+    }
+
+  }
+
+  driver_web_info$core <- driver_web_info$core[
+    driver_web_info$core$appname == "edgedriver",
+  ]
+
+  # early exit
+  if(nrow(driver_web_info$core)==0) return(NULL)
 
 
   # exact match
@@ -163,7 +223,7 @@ rst_webdriver_specific_edge <- function(ever){
 
 }
 
-rst_webdriver_specific_opera <- function(over){
+rst_webdriver_specific_opera <- function(over, offline_info = NULL){
 
   info <- list(
     driver_url =
@@ -180,7 +240,25 @@ rst_webdriver_specific_opera <- function(over){
     stop("Kindly update your Opera browser!", call. = FALSE)
   }
 
-  driver_web_info <- rst_webdriver_url_parser(info$driver_url)
+  do_offline <- FALSE
+  if(is.data.frame(offline_info)){
+    if(nrow(offline_info)>0){
+      do_offline <- TRUE
+      info$offline <- TRUE
+    }
+  }
+  if(do_offline){
+    driver_web_info <- rst_webdriver_url_parser(offline_info, offline = TRUE)
+  }else{
+    driver_web_info <- rst_webdriver_url_parser(info$driver_url)
+  }
+
+  driver_web_info$core <- driver_web_info$core[
+    driver_web_info$core$appname == "operadriver",
+  ]
+
+  # early exit
+  if(nrow(driver_web_info$core)==0) return(NULL)
 
   # as Opera 58 was released on January 23, 2019, based on Chromium 71.
   driver_web_info$core$for_this_browser <-
@@ -194,7 +272,7 @@ rst_webdriver_specific_opera <- function(over){
 
 # technically it is not webdriver (it is selenium itself)
 # sver can be stable, dev, both
-rst_webdriver_specific_selenium <- function(sver = "both"){
+rst_webdriver_specific_selenium <- function(sver = "both", offline_info = NULL){
 
   sver <- match.arg(sver, choices = c("both","dev","stable"))
 
@@ -203,15 +281,32 @@ rst_webdriver_specific_selenium <- function(sver = "both"){
     compatibility = "https://www.selenium.dev/"
   )
 
-  driver_web_info <- rst_webdriver_url_parser(info$driver_url)
+  do_offline <- FALSE
+  if(is.data.frame(offline_info)){
+    if(nrow(offline_info)>0){
+      do_offline <- TRUE
+      info$offline <- TRUE
+    }
+  }
+  if(do_offline){
+    driver_web_info <- rst_webdriver_url_parser(offline_info, offline = TRUE)
+  }else{
+    driver_web_info <- rst_webdriver_url_parser(info$driver_url)
+  }
+
 
   driver_web_info$core <- driver_web_info$core[
     driver_web_info$core$appname == "selenium-server-standalone",
   ]
 
-  driver_web_info$core$version <- gsub(
-    "selenium-server-standalone-|.jar","",
-    driver_web_info$core$file)
+  # early exit
+  if(nrow(driver_web_info$core)==0) return(NULL)
+
+  if(!do_offline){
+    driver_web_info$core$version <- gsub(
+      "selenium-server-standalone-|.jar","",
+      driver_web_info$core$file)
+  }
 
   driver_web_info$core$version_num <- numeric_version(
     gsub(
@@ -225,22 +320,25 @@ rst_webdriver_specific_selenium <- function(sver = "both"){
     # as on 06-01-2021
     stablev_last_known <- numeric_version("3.141.59")
     stablev <- numeric_version("3.141.59")
-    try({
-      # try to update
-      wc <- readLines("https://www.selenium.dev/downloads/", warn = FALSE)
-      wc <- tolower(wc)
-      wc <- wc[grepl("latest stable version", wc)]
-      # very bad way
-      stablev <-
-        numeric_version(
-          strsplit(
+
+    if(!do_offline){
+      try({
+        # try to update
+        wc <- readLines("https://www.selenium.dev/downloads/", warn = FALSE)
+        wc <- tolower(wc)
+        wc <- wc[grepl("latest stable version", wc)]
+        # very bad way
+        stablev <-
+          numeric_version(
             strsplit(
               strsplit(
-                wc,"latest stable version")[[1]][2],
-              "</a>")[[1]][1],
-            ">")[[1]][2]
-        )
-    }, silent = TRUE)
+                strsplit(
+                  wc,"latest stable version")[[1]][2],
+                "</a>")[[1]][1],
+              ">")[[1]][2]
+          )
+      }, silent = TRUE)
+    }
 
     driver_web_info$core$for_this_browser <-
       driver_web_info$core$version_num == stablev

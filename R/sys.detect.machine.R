@@ -18,15 +18,32 @@ sys_get_os_arch <- function(){
 }
 
 sys_get_os_arch_win <- function(){
-  co <- sys_cmd("wmic os get osarchitecture")
-  bit <- "unknown"
-  if(any(grepl("64-bit", tolower(co)))){
-    bit <- "64"
-  }else{
-    if(any(grepl("32-bit", tolower(co)))){
+
+  ro <- sys_reg_read_win(
+    "System\\CurrentControlSet\\Control\\Session Manager\\Environment",
+    hive = "HLM")
+
+  ro <- ro$PROCESSOR_ARCHITECTURE
+
+  if(!is.null(ro)){
+    if(any(grepl(ro, "86"))){
       bit <- "32"
+    }else{
+      bit <- "64"
+    }
+  }else{
+    # cmd way (slow)
+    co <- sys_cmd("wmic os get osarchitecture")
+    bit <- "unknown"
+    if(any(grepl("64-bit", tolower(co)))){
+      bit <- "64"
+    }else{
+      if(any(grepl("32-bit", tolower(co)))){
+        bit <- "32"
+      }
     }
   }
+
   bit
 }
 

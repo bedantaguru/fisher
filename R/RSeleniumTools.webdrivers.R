@@ -13,19 +13,20 @@
 
 rst_webdriver_info <- new.env()
 
-rst_webdriver_online_info <- function(browser){
-  if(missing(browser)){
-    browser = "all"
+rst_webdriver_online_offline_info_core <- function(browser,
+                                                   offline_info = NULL){
+  # cached result if present
+  if(is.null(offline_info)){
+    if(exists("online",envir = rst_webdriver_info)){
+      return(rst_webdriver_info$online)
+    }
   }else{
-    if(browser!="selenium"){
-      browser <- wap_valid_browser(browser)
+    if(exists("offline",envir = rst_webdriver_info)){
+      return(rst_webdriver_info$offline)
     }
   }
 
-  # cached result if present
-  if(exists("online",envir = rst_webdriver_info)){
-    return(rst_webdriver_info$online)
-  }
+
 
   this_system_browsers <- sys_check_web_browsers()
 
@@ -34,33 +35,39 @@ rst_webdriver_online_info <- function(browser){
   if(browser=="chrome" | browser=="all"){
     if("chrome" %in% names(this_system_browsers)){
       info$chrome <- rst_webdriver_specific_chrome(
-        cver = this_system_browsers$chrome$installed_version)
+        cver = this_system_browsers$chrome$installed_version,
+        offline_info = offline_info)
     }
   }
 
   if(browser=="firefox" | browser=="all"){
     if("firefox" %in% names(this_system_browsers)){
       info$firefox <- rst_webdriver_specific_firefox(
-        fver = this_system_browsers$firefox$installed_version)
+        fver = this_system_browsers$firefox$installed_version,
+        offline_info = offline_info)
     }
   }
 
   if(browser=="opera" | browser=="all"){
     if("opera" %in% names(this_system_browsers)){
       info$opera <- rst_webdriver_specific_opera(
-        over = this_system_browsers$opera$installed_version)
+        over = this_system_browsers$opera$installed_version,
+        offline_info = offline_info)
     }
   }
 
   if(browser=="edge" | browser=="all"){
     if("edge" %in% names(this_system_browsers)){
       info$edge <- rst_webdriver_specific_edge(
-        ever = this_system_browsers$edge$installed_version)
+        ever = this_system_browsers$edge$installed_version,
+        offline_info = offline_info)
     }
   }
 
   if(browser=="selenium" | browser=="all"){
-    info$selenium <- rst_webdriver_specific_selenium()
+    info$selenium <- rst_webdriver_specific_selenium(
+      offline_info = offline_info
+    )
   }
 
   d_inf <- do.call(rbind, lapply(info, `[[`, "this_driver_info"))
@@ -75,32 +82,94 @@ rst_webdriver_online_info <- function(browser){
     "file_integrity_algo"
   )])
 
-  if(browser=="all"){
-    assign("online", d_inf, envir = rst_webdriver_info)
+  if(browser=="all" &
+     length(setdiff(names(this_system_browsers), names(info))) == 0){
+    if(is.null(offline_info)){
+      assign("online", d_inf, envir = rst_webdriver_info)
+    }else{
+      assign("offline", d_inf, envir = rst_webdriver_info)
+    }
   }
 
   d_inf
+}
+
+rst_webdriver_online_info <- function(browser){
+  if(missing(browser)){
+    browser = "all"
+  }else{
+    if(browser!="selenium"){
+      browser <- wap_valid_browser(browser)
+    }
+  }
+
+  rst_webdriver_online_offline_info_core(browser)
 
 }
 
-rst_webdriver_url_parser <- function(src_url){
+rst_webdriver_offline_info <- function(){
+  existing <- rst_binman_all_apps_details()
+
+  # exit early
+  if(is.null(existing)) return(NULL)
+
+  rst_webdriver_online_offline_info_core(
+    browser = "all",
+    offline_info = existing)
+}
+
+# this is to convert offline info similar to output of
+# rst_webdriver_url_parser_* which is mainly filling must_cols
+rst_webdriver_offline_info_feeder_from_binman <- function(info_dat){
+
+  info_dat$time_idx <- seq(nrow(info_dat))
+  info_dat$appname <- info_dat$app
+  info_dat$appname_from_url <- info_dat$app
+  info_dat$is_zip <- ifelse(info_dat$app=="seleniumserver", FALSE, TRUE)
+  info_dat$is_jar <- ifelse(info_dat$app=="seleniumserver", TRUE, FALSE)
+  info_dat$platform_tag <- info_dat$platform
+  info_dat$is_valid_platform <- ifelse(
+    info_dat$platform_tag  == "generic",
+    TRUE,
+    sys_valid_os_string(info_dat$platform_tag)
+  )
+  info_dat$file <- basename(info_dat$zip_file)
+  info_dat$url <- NA
+  info_dat$file_integrity <- 1000
+  info_dat$file_integrity_algo <- "size"
+
+  # binman specific
+  info_dat$appname[
+    info_dat$appname == "seleniumserver"
+  ] <- "selenium-server-standalone"
+
+  info_dat
+
+}
+
+rst_webdriver_url_parser <- function(src_url, offline = FALSE){
 
   raw <- NULL
 
-  if(grepl("www.googleapis.com", src_url)){
-    raw <- rst_webdriver_json_url_parser_googleapis(src_url)
+  if(offline){
+    raw <- rst_webdriver_offline_info_feeder_from_binman(src_url)
   }else{
-    if(grepl("api.github.com", src_url)){
-      raw <- rst_webdriver_json_url_parser_github(src_url)
+    if(grepl("www.googleapis.com", src_url)){
+      raw <- rst_webdriver_json_url_parser_googleapis(src_url)
     }else{
-      if(grepl("msedgedriver.azureedge.net", src_url) |
-         grepl("edgedriver_direct_query_", src_url)){
-        raw <- rst_webdriver_edge_url_parser(src_url)
+      if(grepl("api.github.com", src_url)){
+        raw <- rst_webdriver_json_url_parser_github(src_url)
       }else{
-        stop("Unknwon source", call. = FALSE)
+        if(grepl("msedgedriver.azureedge.net", src_url) |
+           grepl("edgedriver_direct_query_", src_url)){
+          raw <- rst_webdriver_edge_url_parser(src_url)
+        }else{
+          stop("Unknwon source", call. = FALSE)
+        }
       }
     }
   }
+
 
   if(!is.data.frame(raw)){
     stop("Unable to fetch from source URL", call. = FALSE)
