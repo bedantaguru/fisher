@@ -81,6 +81,9 @@ rst_binman_apps_diag <- function(){
 }
 
 rst_binman_ensure_webdrivers <- function(){
+
+  webdrivers_offline <- rst_webdriver_offline_info()
+
   webdrivers <- rst_webdriver_online_info()
   # bf: binman format
   webdrivers_bf <- webdrivers

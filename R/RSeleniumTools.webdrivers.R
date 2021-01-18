@@ -11,18 +11,18 @@
 # https://firefox-source-docs.mozilla.org/testing/geckodriver/Support.html
 # https://developer.microsoft.com/en-us/microsoft-edge/tools/webdriver/
 
-rst_webdriver_info <- new.env()
+rst_webdriver_info_env <- new.env()
 
 rst_webdriver_online_offline_info_core <- function(browser,
                                                    offline_info = NULL){
   # cached result if present
   if(is.null(offline_info)){
-    if(exists("online",envir = rst_webdriver_info)){
-      return(rst_webdriver_info$online)
+    if(exists("online",envir = rst_webdriver_info_env)){
+      return(rst_webdriver_info_env$online)
     }
   }else{
-    if(exists("offline",envir = rst_webdriver_info)){
-      return(rst_webdriver_info$offline)
+    if(exists("offline",envir = rst_webdriver_info_env)){
+      return(rst_webdriver_info_env$offline)
     }
   }
 
@@ -85,9 +85,9 @@ rst_webdriver_online_offline_info_core <- function(browser,
   if(browser=="all" &
      length(setdiff(names(this_system_browsers), names(info))) == 0){
     if(is.null(offline_info)){
-      assign("online", d_inf, envir = rst_webdriver_info)
+      assign("online", d_inf, envir = rst_webdriver_info_env)
     }else{
-      assign("offline", d_inf, envir = rst_webdriver_info)
+      assign("offline", d_inf, envir = rst_webdriver_info_env)
     }
   }
 
@@ -108,12 +108,13 @@ rst_webdriver_online_info <- function(browser){
 }
 
 rst_webdriver_offline_info <- function(){
+  # currently only binman manages download and update etc
   existing <- rst_binman_all_apps_details()
 
   # exit early
   if(is.null(existing)) return(NULL)
 
-  rst_webdriver_online_offline_info_core(
+  compatibility <- rst_webdriver_online_offline_info_core(
     browser = "all",
     offline_info = existing)
 }

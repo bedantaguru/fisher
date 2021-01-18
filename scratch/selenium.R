@@ -1,4 +1,13 @@
 
+
+# @Dev
+# test of killing existing selenium
+# remDr <- RSelenium::remoteDriver(browserName = "htmlunit", port = 4567L)
+# remDr$closeServer # does not work
+#
+
+
+
 se <- wdman::selenium(check = F, chromever = "86.0.4240.22")
 
 # REf https://github.com/ropensci/RSelenium/issues/207

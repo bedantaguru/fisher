@@ -41,6 +41,6 @@ view_me <- function(wp){
   tf <- tempfile(pattern = "wp_preview_", fileext = ".html")
   writeLines(wpc, tf)
   suppressWarnings(rstudioapi::viewer(tf))
-  unlink(tf)
+  # unlink(tf)
 }
 
