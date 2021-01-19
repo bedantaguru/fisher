@@ -23,6 +23,11 @@ rst_webdriver_specific_finalizer <- function(driver_web_info, info){
     ), call. = FALSE)
   }
 
+   # add remark column if not present
+  if(is.null(driver_web_info$core$remarks)){
+    driver_web_info$core$remarks <- ""
+  }
+
   # this is the correct driver
   driver_web_info$core$this_one <- FALSE
 
@@ -302,11 +307,9 @@ rst_webdriver_specific_selenium <- function(sver = "both", offline_info = NULL){
   # early exit
   if(nrow(driver_web_info$core)==0) return(NULL)
 
-  if(!do_offline){
-    driver_web_info$core$version <- gsub(
-      "selenium-server-standalone-|.jar","",
-      driver_web_info$core$file)
-  }
+  driver_web_info$core$version <- gsub(
+    "selenium-server-standalone-|.jar","",
+    driver_web_info$core$file)
 
   driver_web_info$core$version_num <- numeric_version(
     gsub(
@@ -342,6 +345,9 @@ rst_webdriver_specific_selenium <- function(sver = "both", offline_info = NULL){
 
     driver_web_info$core$for_this_browser <-
       driver_web_info$core$version_num == stablev
+
+    driver_web_info$core$remarks <- "stable"
+
     if(!any(driver_web_info$core$for_this_browser)){
       # this should match 1
       driver_web_info$core$for_this_browser <-
@@ -354,6 +360,8 @@ rst_webdriver_specific_selenium <- function(sver = "both", offline_info = NULL){
 
       driver_web_info$core$for_this_browser <- TRUE
       lat <- rst_webdriver_specific_finalizer(driver_web_info, info)
+
+      lat$this_driver_info$remarks <- "dev"
 
       comb <- list(
         this_driver_info = unique(
@@ -373,6 +381,7 @@ rst_webdriver_specific_selenium <- function(sver = "both", offline_info = NULL){
   if(sver == "dev"){
     # pick latest
     driver_web_info$core$for_this_browser <- TRUE
+    driver_web_info$core$remarks <- "dev"
   }
 
 

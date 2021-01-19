@@ -1,12 +1,21 @@
 
 
-rst_wdman_selenium_launcher <- function(port = NULL){
-  webdrivers_offline <- rst_webdriver_offline_info()
-  # @Dev need to infuse in offline info
-  bad <- rst_binman_all_apps_details()
-  bad <- bad[c("app", "version","bin_file")]
+rst_wdman_selenium_info_env <- new.env()
 
-  # {wdman} managed browsers
+rst_wdman_selenium_launcher <- function(
+  port = NULL,
+  selenium_version = c("dev","stable"),
+  webdrivers_offline
+){
+
+  selenium_version <- match.arg(selenium_version)
+
+  if(missing(webdrivers_offline)){
+    webdrivers_offline <- rst_webdriver_offline_info()
+  }
+
+
+  # {wdman} managed browsers + selenium
   # chrome
   # gecko
   # ie
@@ -18,12 +27,21 @@ rst_wdman_selenium_launcher <- function(port = NULL){
   # selenium
   sver <- NULL
   if(any(grepl("selenium",webdrivers_offline$appname))){
-    sver <- webdrivers_offline$version[
-      grepl("selenium",webdrivers_offline$appname)
+
+    sel <- webdrivers_offline[
+      grepl("selenium",webdrivers_offline$appname),
     ]
-    # @Dev
-    # this need to work out
+
+    sver <- sel$version
+
+
+    if(selenium_version %in% sel$remarks){
+      sver <- sver[sel$remarks==selenium_version]
+    }
+
+    # default is latest
     sver <- max(sver)
+
   }
 
   # chrome
@@ -46,20 +64,31 @@ rst_wdman_selenium_launcher <- function(port = NULL){
 
   # opera
   if("operadriver" %in% webdrivers_offline$appname){
-    oexe <- webdrivers_offline$file[
+    oexe <- webdrivers_offline$bin_file[
       webdrivers_offline$appname=="operadriver"
     ]
-    extra_jvmargs_lst$opera <- oexe
+    extra_jvmargs_lst$opera <- paste0(
+      "-Dwebdriver.opera.driver=",
+      paste0('"',oexe,'"')
+    )
   }
 
   # edge
-  ever <- NULL
   if("edgedriver" %in% webdrivers_offline$appname){
-    ever <- webdrivers_offline$version[
+    eexe <- webdrivers_offline$bin_file[
       webdrivers_offline$appname=="edgedriver"
     ]
+    extra_jvmargs_lst$edge <- paste0(
+      "-Dwebdriver.edge.driver=",
+      paste0('"',eexe,'"')
+    )
   }
 
+
+  # kill previous instance
+  if(exists("s_handle",envir = rst_wdman_selenium_info_env)){
+    rst_wdman_selenium_info_env$s_handle$process$kill_tree()
+  }
 
   sport <- sys_get_a_port(4567)
 
@@ -72,30 +101,17 @@ rst_wdman_selenium_launcher <- function(port = NULL){
     geckover = gver,
 
     # rest (opera and edge managed by {fisher})
-    # @Dev
-    jvmargs = list(
-      opera =
-        paste0(
-          "-Dwebdriver.opera.driver=",
-          paste0('"',oexe,'"')
-        ),
-      edge =
-        paste0(
-          "-Dwebdriver.edge.driver=",
-          paste0('"',eexe,'"')
-        )
-    ),
+    jvmargs = extra_jvmargs_lst,
 
     # disabling phantom and ie
     phantomver = NULL, iedrver = NULL,
-    # no need to check as it is one time action and will be taken care by
+    # no need to check as it is one time action, and will be taken care by
     # {fisher}
     check = FALSE)
 
+  assign( "s_handle", sel, envir = rst_wdman_selenium_info_env)
+  assign( "s_port", sport, envir = rst_wdman_selenium_info_env)
 
-  # @Dev
-  # client names MicrosoftEdge
-  rd <- RSelenium::remoteDriver(browserName = "chrome", port = sport)
-
+  invisible(sel)
 
 }
