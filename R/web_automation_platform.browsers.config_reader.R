@@ -1,15 +1,22 @@
 
 
-wap_browser_config_reader <- function(){
-
+wap_browser_config_reader <- function(browser, file_path){
+  browser <- wap_valid_browser(browser)
 }
 
 ######### Chrome ########
 
-wap_browser_config_reader_chrome <- function(){
+wap_browser_config_reader_chrome <- function(file_path){
   # path found in chrome://version/
   if(is_available("jsonlite")){
-    cf <- wap_sys_browser_config_path_chrome()
+
+    if(missing(file_path)){
+      cf <- wap_sys_browser_config_path_chrome()
+    }else{
+      cf <- file_path
+    }
+
+
     # early exit
     if(is.na(cf)){
       cat("\nUnable to found profile path. Check chrome://version/ in chrome\n")
@@ -31,9 +38,13 @@ wap_sys_browser_config_path_chrome <- function(){
 
   al <- sapply(al, normalizePath, mustWork = FALSE)
 
+  if(!any(dir.exists(al))) return(NA)
+
+  al <- al[which(dir.exists(al))[1]]
+
   # @Dev
   # mostly in linux it is different
-  pref <- file.path(al[which(dir.exists(al))[1]], "Default","Preferences")
+  pref <- file.path(al, "Default","Preferences")
   pref <- normalizePath(pref, mustWork = FALSE)
 
   if(file.exists(pref)){
@@ -98,23 +109,67 @@ wap_sys_browser_config_path_chrome_linux <- function(){
 
 
 ######### Firefox ########
-# ref https://developer.mozilla.org/en-US/docs/Mozilla/Preferences/A_brief_guide_to_Mozilla_preferences
+# ref :
+# https://developer.mozilla.org/en-US/docs/Mozilla/Preferences/A_brief_guide_to_Mozilla_preferences
+# A preference is read from a file, and can call up to four methods: pref(),
+# user_pref(), sticky_pref() and lockPref(). All preferences files may call
+# pref(), user_pref() and sticky_pref(), while the config file in addition may
+# call lockPref().
+# Ref : https://github.com/Theemim/GeckoAutoconfigIntro
 
-wap_browser_config_reader_firefox <- function(){
+wap_browser_config_reader_firefox <- function(file_path){
   # path found in about:support
-  if(is_available("jsonlite")){
-    cf <- wap_sys_browser_config_path_firefox()
-    # early exit
-    if(is.na(cf)){
-      cat("\nUnable to found profile path. Check about:support in firefox\n")
-      return(list())
-    }
-    jsonlite::fromJSON(
-      readLines(cf, warn = FALSE)
-    )
+
+  if(missing(file_path)){
+    ff <- wap_sys_browser_config_path_firefox()
   }else{
-    list()
+    ff <- file_path
   }
+
+  # early exit
+  if(is.na(ff)){
+    cat("\nUnable to found profile path. Check about:support in firefox\n")
+    return(list())
+  }
+
+  # simulate js and take out pref as list
+  senv <- new.env()
+  senv$lo <- list()
+  senv$true <- TRUE
+  senv$false <- FALSE
+  senv$false <- FALSE
+
+  senv$user_pref <- function(prefName, value){
+    senv$lo[[prefName]]<<-value
+  }
+
+  senv$pref <- senv$sticky_pref <- senv$user_pref
+
+  ffls <- unlist(lapply(ff, readLines))
+  # valid lines retention
+  ffls <- ffls[grepl("pref\\(|pref\\(|;$",ffls)]
+
+  # # alternate approach (but not so easy)
+  # # remove linear comments
+  # ffls <- ffls[!grepl("^ +//|^//",ffls)]
+  # # obfuscation of /* comments
+  # # but this is not working as expected
+  # ffls <- gsub("^/\\*|^ +/\\*","f <- function()\\{",ffl)
+  # ffls <- gsub("\\*/$|\\*/ +$","\\}",ffls)
+  # # Other options is to use {v8}
+
+  # fallback option
+  lo <- list()
+
+  try({
+    source(exprs = parse(text = ffls), local = senv)
+
+    lo <- senv$lo
+  }, silent = TRUE)
+
+  lo
+
+
 }
 
 # Default location for firefox profile (default)
@@ -127,12 +182,24 @@ wap_sys_browser_config_path_firefox <- function(){
 
   al <- sapply(al, normalizePath, mustWork = FALSE)
 
-  # @Dev
-  # mostly in linux it is different
-  pref <- file.path(al[which(dir.exists(al))[1]], "Default","Preferences")
+  if(!any(dir.exists(al))) return(NA)
+
+  al <- al[which(dir.exists(al))[1]]
+
+  profs  <- list.files(al, pattern = "default")
+
+  prefs <- list.files(
+    al,
+    pattern = "prefs.js|user.js",
+    recursive = TRUE, full.names = TRUE)
+
+  pref <- prefs[grepl(paste0(profs, collapse = "|"), prefs)]
+
+  if(length(pref)==0) return(NA)
+
   pref <- normalizePath(pref, mustWork = FALSE)
 
-  if(file.exists(pref)){
+  if(all(file.exists(pref))){
     pref
   }else{
     NA
@@ -165,7 +232,7 @@ wap_sys_browser_config_path_firefox_mac <- function(){
 
 }
 
-wap_sys_browser_config_path_chrome_linux <- function(){
+wap_sys_browser_config_path_firefox_linux <- function(){
 
   # Linux
   # Profile folders are located here:
@@ -177,3 +244,11 @@ wap_sys_browser_config_path_chrome_linux <- function(){
   )
 
 }
+
+
+######### Edge ########
+
+
+
+
+######### Opera ########
