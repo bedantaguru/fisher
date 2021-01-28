@@ -90,7 +90,40 @@ rst_wdman_selenium_launcher <- function(
     rst_wdman_selenium_info_env$s_handle$process$kill_tree()
   }
 
-  sport <- sys_get_a_port(4567)
+  # desired port
+  # match with below dport in force_kill_logic
+  dport <- 4567L
+
+  # sets arg `force` in sys_get_a_port as TRUE is some condition is met
+  # otherwise FALSE
+  force_kill_logic <- function(){
+    # match this with above dport
+    dport <- 4567L
+
+    l <- tryCatch({
+
+      str1 <- readLines(
+        paste0("http://localhost:",dport,"/wd/hub/status"),
+        warn = FALSE)
+      str2 <- readLines(
+        paste0("http://localhost:",dport,"/wd/hub/sessions"),
+        warn = FALSE)
+
+      # it can be true mostly if it is a selenium
+      any(grepl("server is running",tolower(str1))) &
+        any(grepl("status",tolower(str2)))
+
+    },
+    error = function(e) FALSE,
+    finally = FALSE)
+
+    if(!is.logical(l)) return(FALSE)
+    if(is.na(l)) return(FALSE)
+
+    l
+  }
+
+  sport <- sys_get_a_port(dport, kill_logic = force_kill_logic)
 
   sel <- wdman::selenium(
     port = sport,

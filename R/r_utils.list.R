@@ -42,3 +42,51 @@ diff_list <- function(l1, l2){
   }
 }
 
+# # sample
+# l1 <- list(
+#   a=list(a1=1, a2=F, a3="hi"), b=list(a=1, b=2, c=T), d= 123, e = list(14))
+# l2 <- list(
+#   a=list(a1=10, a4=T, a5="hello"), c=list(y=1), b= list(d = "hi"), e = 14)
+
+# following logic is used for merging
+# 1) if node name matches, match further
+# 2) if same name node present first one is used
+# 3) if common nodes are not list (first one is used) (at  least any)
+# 4) all nodes (including uncommon nodes) are added back
+
+merge_list <- function(l1, l2){
+
+  n1 <- names(l1)
+  n2 <- names(l2)
+  # name in n1 only
+  n10 <- setdiff(n1, n2)
+  # name in n2 only
+  n01 <- setdiff(n2, n1)
+
+  # common name
+  cns <- intersect(n1, n2)
+
+  lo <- list()
+
+  if(length(n10)>0){
+    lo <- c(lo, l1[n10])
+  }
+
+  if(length(n01)>0){
+    lo <- c(lo, l2[n01])
+  }
+
+  for(cn in cns){
+    if(is.list(l1[[cn]]) & is.list(l2[[cn]])){
+      lo[[cn]] <- merge_list(l1[[cn]], l2[[cn]])
+    }else{
+      lo[[cn]] <- l1[[cn]]
+    }
+  }
+
+  # ordering
+
+  lo[unique(c(n1, n2))]
+
+
+}

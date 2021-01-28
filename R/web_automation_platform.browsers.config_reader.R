@@ -16,6 +16,16 @@ wap_browser_config_reader_chrome <- function(file_path){
       cf <- file_path
     }
 
+    # @Dev
+    # mostly in linux it is different
+    pref <- file.path(cf, "Default","Preferences")
+    pref <- normalizePath(pref, mustWork = FALSE)
+
+    if(file.exists(pref)){
+      cf <- pref
+    }else{
+      cf <- NA
+    }
 
     # early exit
     if(is.na(cf)){
@@ -32,6 +42,7 @@ wap_browser_config_reader_chrome <- function(file_path){
 
 # Default location for chrome profile (default)
 # https://chromium.googlesource.com/chromium/src/+/master/docs/user_data_dir.md
+
 wap_sys_browser_config_path_chrome <- function(){
 
   al <- sys_use_os_specific_method("wap_sys_browser_config_path_chrome")
@@ -42,16 +53,7 @@ wap_sys_browser_config_path_chrome <- function(){
 
   al <- al[which(dir.exists(al))[1]]
 
-  # @Dev
-  # mostly in linux it is different
-  pref <- file.path(al, "Default","Preferences")
-  pref <- normalizePath(pref, mustWork = FALSE)
-
-  if(file.exists(pref)){
-    pref
-  }else{
-    NA
-  }
+  al
 }
 
 wap_sys_browser_config_path_chrome_windows <- function(){
@@ -126,7 +128,28 @@ wap_browser_config_reader_firefox <- function(file_path){
     ff <- file_path
   }
 
-  # early exit
+  profs  <- list.files(ff, pattern = "default")
+  prefs <- list.files(
+    ff,
+    pattern = "prefs.js|user.js",
+    recursive = TRUE, full.names = TRUE)
+
+  pref <- prefs[grepl(paste0(profs, collapse = "|"), prefs)]
+
+  if(length(pref)==0){
+    ff <- NA
+  }else{
+    pref <- normalizePath(pref, mustWork = FALSE)
+
+    if(all(file.exists(pref))){
+      ff <- pref
+    }else{
+      ff <- NA
+    }
+
+  }
+
+    # early exit
   if(is.na(ff)){
     cat("\nUnable to found profile path. Check about:support in firefox\n")
     return(list())
@@ -186,24 +209,7 @@ wap_sys_browser_config_path_firefox <- function(){
 
   al <- al[which(dir.exists(al))[1]]
 
-  profs  <- list.files(al, pattern = "default")
-
-  prefs <- list.files(
-    al,
-    pattern = "prefs.js|user.js",
-    recursive = TRUE, full.names = TRUE)
-
-  pref <- prefs[grepl(paste0(profs, collapse = "|"), prefs)]
-
-  if(length(pref)==0) return(NA)
-
-  pref <- normalizePath(pref, mustWork = FALSE)
-
-  if(all(file.exists(pref))){
-    pref
-  }else{
-    NA
-  }
+  al
 }
 
 

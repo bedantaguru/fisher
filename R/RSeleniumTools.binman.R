@@ -82,9 +82,13 @@ rst_binman_apps_diag <- function(){
 
 rst_binman_ensure_webdrivers <- function(){
 
-  webdrivers_offline <- rst_webdriver_offline_info()
+  webdriver_info <- rst_webdriver_info()
 
-  webdrivers <- rst_webdriver_online_info()
+  # early exit
+  if(is.null(webdriver_info$online)) return(invisible(0))
+
+  webdrivers <- webdriver_info$online
+
   # bf: binman format
   webdrivers_bf <- webdrivers
   webdrivers_bf$appname[
@@ -117,6 +121,15 @@ rst_binman_ensure_webdrivers <- function(){
     for_a_node
   )
 
+  # reset cached results
+  # from rst_webdriver_info_env
+
+  suppressWarnings(
+    rm(list = c("online", "offline"),
+       envir = rst_webdriver_info_env)
+  )
+
+  return(invisible(0))
 
 }
 

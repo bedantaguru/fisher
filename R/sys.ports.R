@@ -75,7 +75,8 @@ sys_is_port_free <- function(port, pmap){
 sys_get_a_port <- function(
   desired_port,
   port_range = c(1028L, 65000L),
-  force  = FALSE){
+  force  = FALSE,
+  kill_logic = function(){FALSE}){
 
   # ref on port range
   # https://www.ibm.com/support/knowledgecenter/ssw_ibm_i_74/cl/addtcpport.htm
@@ -96,6 +97,12 @@ sys_get_a_port <- function(
       break()
     }else{
       get_fresh <- TRUE
+
+      # try the logic whether to kill it or not
+      if(!force){
+        force <- kill_logic()
+      }
+
       if(force){
         # try to kill it
         # {ps} is required for this

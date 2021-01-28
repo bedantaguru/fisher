@@ -28,7 +28,7 @@ rst_remotedriver <- function(
   version = "", platform = "ANY", javascript = TRUE,
   # 4. Further argument
   ...
-  ){
+){
   # As per the documentation of remoteDriver-class {RSelenium} Documented
   # objects are remoteDriver is a generator object. To define a new remoteDriver
   # class method 'new' is called. The slots (default value) that are user
@@ -50,4 +50,16 @@ rst_remotedriver <- function(
   # Among these only remoteServerAddr, version, platform and javascript is
   # configurable (if wanted) (rest are set by {fisher} or defined alternatively)
   browser <- wap_valid_browser(browser)
+
+  # @Dev
+  # qick tap
+
+  # soo big name! making small
+  rst_wsrcbn <-rst_webdriver_selenium_remote_client_browser_names
+
+  RSelenium::remoteDriver(
+    port = rst_wdman_selenium_info_env$s_port,
+    browserName = rst_wsrcbn$browser_name_client[
+      rst_wsrcbn$browser_name_short==browser])
+
 }

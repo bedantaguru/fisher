@@ -215,9 +215,10 @@ rst_webdriver_specific_edge <- function(ever, offline_info = NULL){
   driver_web_info$core$for_this_browser <-
     driver_web_info$core$version_num == ever_n
 
-  if(!any(driver_web_info$core$for_this_browser)){
+  if(!any(driver_web_info$core$for_this_browser) & is.null(offline_info)){
     # loose match
-    # however this may not be correct way so issue warning
+    # however this may not be correct way so issue warning (except in offline
+    # check. Where it is simply disabled)
     warning("Exact match not found for edge driver!", call. = FALSE)
     driver_web_info$core$for_this_browser <-
       as.numeric(driver_web_info$core$version_num[,1]) == as.numeric(ever_n[1,1])
