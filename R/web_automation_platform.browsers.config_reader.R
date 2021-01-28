@@ -35,26 +35,55 @@ wap_browser_config_reader_chrome <- function(file_path,
 
     # @Dev
     # mostly in linux it is different
+    # Preferences
     pref <- file.path(cf, "Default","Preferences")
     pref <- normalizePath(pref, mustWork = FALSE)
 
-    if(file.exists(pref)){
-      cf <- pref
-    }else{
-      cf <- NA
-    }
+    # Secure Preferences
+    pref2 <- file.path(cf, "Default","Secure Preferences")
+    pref2 <- normalizePath(pref2, mustWork = FALSE)
+
+    # Preferences (in root) (for opera)
+    pref3 <- file.path(cf, "Preferences")
+    pref3 <- normalizePath(pref3, mustWork = FALSE)
+
+    # Secure Preferences (in root) (for opera)
+    pref4 <- file.path(cf, "Secure Preferences")
+    pref4 <- normalizePath(pref4, mustWork = FALSE)
+
+
 
     # early exit
-    if(is.na(cf)){
+    if(!any(file.exists(c(pref, pref2, pref3, pref4)))){
       cat(paste0(
         "\nUnable to found profile path. Check ",chromium_details,
         " in ",chromium_name,"\n"
       ))
       return(list())
     }
-    jsonlite::fromJSON(
-      readLines(cf, warn = FALSE)
-    )
+
+    if(file.exists(pref)){
+      l1 <- jsonlite::fromJSON(
+        readLines(pref, warn = FALSE)
+      )
+    }else{
+      l1 <- list()
+    }
+
+
+    for(pf in c(pref2, pref3, pref4)){
+
+      if(file.exists(pf)){
+        l2 <- jsonlite::fromJSON(
+          readLines(pf, warn = FALSE)
+        )
+        l1 <- merge_list(l1, l2)
+      }
+
+    }
+
+    l1
+
   }else{
     list()
   }
@@ -169,7 +198,7 @@ wap_browser_config_reader_firefox <- function(file_path){
 
   }
 
-    # early exit
+  # early exit
   if(any(is.na(ff))){
     cat("\nUnable to found profile path. Check about:support in firefox\n")
     return(list())
@@ -276,6 +305,9 @@ wap_sys_browser_config_path_firefox_linux <- function(){
 
 wap_browser_config_reader_opera <- function(file_path){
   # path found in opera://about
+  if(missing(file_path)){
+    file_path <- wap_sys_browser_config_path_opera()
+  }
   wap_browser_config_reader_chrome(file_path,
                                    chromium_name = "Opera",
                                    chromium_details = "opera://about")
@@ -310,6 +342,9 @@ wap_sys_browser_config_path_opera_windows <- function(){
 ######### Edge ########
 wap_browser_config_reader_edge <- function(file_path){
   # path found in edge://version/
+  if(missing(file_path)){
+    file_path <- wap_sys_browser_config_path_edge()
+  }
   wap_browser_config_reader_chrome(file_path,
                                    chromium_name = "Edge",
                                    chromium_details = "edge://version/")
