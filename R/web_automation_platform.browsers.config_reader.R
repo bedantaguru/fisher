@@ -2,11 +2,28 @@
 
 wap_browser_config_reader <- function(browser, file_path){
   browser <- wap_valid_browser(browser)
+  l <- tryCatch({
+    if(!missing(file_path)){
+      do.call(what = paste0("wap_browser_config_reader_",browser),
+              args = list(file_path = file_path))
+    }else{
+      do.call(what = paste0("wap_browser_config_reader_",browser),
+              args = list())
+    }
+
+  }, error = function(e){
+    cat("\nwap_browser_config_reader failed you may",
+        "try rst_remotedriver_config_reader\n")
+    list()
+  })
+  l
 }
 
 ######### Chrome ########
 
-wap_browser_config_reader_chrome <- function(file_path){
+wap_browser_config_reader_chrome <- function(file_path,
+                                             chromium_name = "Chrome",
+                                             chromium_details = "chrome://version/"){
   # path found in chrome://version/
   if(is_available("jsonlite")){
 
@@ -29,7 +46,10 @@ wap_browser_config_reader_chrome <- function(file_path){
 
     # early exit
     if(is.na(cf)){
-      cat("\nUnable to found profile path. Check chrome://version/ in chrome\n")
+      cat(paste0(
+        "\nUnable to found profile path. Check ",chromium_details,
+        " in ",chromium_name,"\n"
+      ))
       return(list())
     }
     jsonlite::fromJSON(
@@ -150,7 +170,7 @@ wap_browser_config_reader_firefox <- function(file_path){
   }
 
     # early exit
-  if(is.na(ff)){
+  if(any(is.na(ff))){
     cat("\nUnable to found profile path. Check about:support in firefox\n")
     return(list())
   }
@@ -252,9 +272,75 @@ wap_sys_browser_config_path_firefox_linux <- function(){
 }
 
 
-######### Edge ########
-
-
-
-
 ######### Opera ########
+
+wap_browser_config_reader_opera <- function(file_path){
+  # path found in opera://about
+  wap_browser_config_reader_chrome(file_path,
+                                   chromium_name = "Opera",
+                                   chromium_details = "opera://about")
+}
+
+# Default location for opera profile (default)
+# https://techdows.com/2016/08/opera-profile-location.html
+
+wap_sys_browser_config_path_opera <- function(){
+
+  al <- sys_use_os_specific_method("wap_sys_browser_config_path_opera")
+
+  al <- sapply(al, normalizePath, mustWork = FALSE)
+
+  if(!any(dir.exists(al))) return(NA)
+
+  al <- al[which(dir.exists(al))[1]]
+
+  al
+}
+
+wap_sys_browser_config_path_opera_windows <- function(){
+
+  ad <- Sys.getenv("APPDATA")
+
+  list(
+    Opera = file.path(ad, "Opera Software\\Opera Stable")
+  )
+
+}
+
+######### Edge ########
+wap_browser_config_reader_edge <- function(file_path){
+  # path found in edge://version/
+  wap_browser_config_reader_chrome(file_path,
+                                   chromium_name = "Edge",
+                                   chromium_details = "edge://version/")
+}
+
+# Default location for edge profile (default)
+# https://www.tenforums.com/tutorials/144642-how-add-profile-microsoft-edge-chromium.html
+
+wap_sys_browser_config_path_edge <- function(){
+
+  al <- sys_use_os_specific_method("wap_sys_browser_config_path_edge")
+
+  al <- sapply(al, normalizePath, mustWork = FALSE)
+
+  if(!any(dir.exists(al))) return(NA)
+
+  al <- al[which(dir.exists(al))[1]]
+
+  al
+}
+
+wap_sys_browser_config_path_edge_windows <- function(){
+
+  lad <- Sys.getenv("LOCALAPPDATA")
+
+  list(
+    Edge = file.path(lad, "Microsoft\\Edge\\User Data"),
+    Edge_beta = file.path(lad, "Microsoft\\Edge Beta\\User Data"),
+    Edge_dev = file.path(lad, "Microsoft\\Edge Dev\\User Data"),
+    Edge_canary = file.path(lad, "Microsoft\\Edge SxS\\User Data")
+  )
+
+}
+
