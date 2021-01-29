@@ -100,27 +100,7 @@ rst_wdman_selenium_launcher <- function(
     # match this with above dport
     dport <- 4567L
 
-    l <- tryCatch({
-
-      str1 <- readLines(
-        paste0("http://localhost:",dport,"/wd/hub/status"),
-        warn = FALSE)
-      str2 <- readLines(
-        paste0("http://localhost:",dport,"/wd/hub/sessions"),
-        warn = FALSE)
-
-      # it can be true mostly if it is a selenium
-      any(grepl("server is running",tolower(str1))) &
-        any(grepl("status",tolower(str2)))
-
-    },
-    error = function(e) FALSE,
-    finally = FALSE)
-
-    if(!is.logical(l)) return(FALSE)
-    if(is.na(l)) return(FALSE)
-
-    l
+    sys_is_port_running_selenium(dport)
   }
 
   sport <- sys_get_a_port(dport, kill_logic = force_kill_logic)
@@ -148,3 +128,4 @@ rst_wdman_selenium_launcher <- function(
   invisible(sel)
 
 }
+

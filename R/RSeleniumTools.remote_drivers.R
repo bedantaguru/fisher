@@ -57,9 +57,20 @@ rst_remotedriver <- function(
   # soo big name! making small
   rst_wsrcbn <-rst_webdriver_selenium_remote_client_browser_names
 
+  ecaps <- list()
+
+  if(!missing(browser_config)){
+    ecaps <- browser_config
+  }
+
   RSelenium::remoteDriver(
+    remoteServerAddr = remoteServerAddr,
     port = rst_wdman_selenium_info_env$s_port,
     browserName = rst_wsrcbn$browser_name_client[
-      rst_wsrcbn$browser_name_short==browser])
+      rst_wsrcbn$browser_name_short==browser],
+    extraCapabilities = ecaps,
+    version = version,
+    platform = platform,
+    javascript = javascript)
 
 }

@@ -89,6 +89,16 @@ sys_use_os_specific_method <- function(fname){
 }
 
 
+sys_is_pid_active <- function(pid){
+  if(is_available("ps")){
+    pid %in% ps::ps_pids()
+  }else{
+    stop("{ps} is required for this", call. = FALSE)
+    # alternative can be defined here
+    # which is not implemented yet
+  }
+}
+
 # safe system call
 sys_cmd <- function(cmd, ...){
   tryCatch(

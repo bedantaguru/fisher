@@ -133,3 +133,122 @@ sys_get_a_port <- function(
   as.integer(this_port)
 
 }
+
+
+sys_is_port_running_selenium <- function(port, timeout_sec = 0.1){
+
+  l <- tryCatch({
+
+    if(is_available("httr")){
+      # faster detection as time out can be configured here
+      str1 <- httr::content(
+        httr::GET(
+          paste0("http://localhost:",port, "/wd/hub/status"),
+          httr::timeout(timeout_sec)
+        ),
+        as = "text", encoding = "UTF-8")
+      str2 <- httr::content(
+        httr::GET(
+          paste0("http://localhost:",port,"/wd/hub/sessions"),
+          httr::timeout(timeout_sec)
+        ),
+        as = "text", encoding = "UTF-8")
+    }else{
+      # slow detection (do not know how to configure timeout here)
+
+      suppressWarnings({
+        str1 <- readLines(
+          paste0("http://localhost:",port,"/wd/hub/status"),
+          warn = FALSE)
+        str2 <- readLines(
+          paste0("http://localhost:",port,"/wd/hub/sessions"),
+          warn = FALSE)
+      })
+
+    }
+
+
+    # it can be true mostly if it is a selenium
+    any(grepl("server is running",tolower(str1))) &
+      any(grepl("status",tolower(str2)))
+  },
+  error = function(e) FALSE,
+  finally = FALSE)
+
+  if(!is.logical(l)) return(FALSE)
+  if(is.na(l)) return(FALSE)
+
+  l
+}
+
+# This should be able to detect selenium running state which may be initiated by
+# following things:-
+#
+# 1) this R-session
+#
+# 2) Separate R-session
+#
+# 3) Not by any R-session
+#
+sys_find_selenium_pid <- function(full_search = TRUE){
+
+  # quick detection in case already started by {fisher}
+  if(exists("s_handle",envir = rst_wdman_selenium_info_env)){
+    if(rst_wdman_selenium_info_env$s_handle$process$is_alive()){
+      return(rst_wdman_selenium_info_env$s_handle$process$get_pid())
+    }
+  }
+
+  pmap <- sys_get_pid_port_map()
+
+  # early exit
+  if(nrow(pmap)==0) return(NULL)
+
+  # if orphaned by previous run
+  # this usually will not happen
+
+  if(is_available("ps")){
+    all_childs <- ps::ps_children(recursive = TRUE)
+    child_pids <- sapply(all_childs, ps::ps_pid)
+    pmap_small <-pmap[pmap$pid %in% child_pids,]
+    c0 <- sapply(pmap_small$port, sys_is_port_running_selenium)
+    if(any(c0)){
+      return(pmap_small$pid[c0])
+    }
+  }
+
+
+  c1 <- sapply(pmap$port, sys_is_port_running_selenium)
+
+  if(!any(c1) & full_search){
+    # try with more timeout on expected pids
+
+    # first check pid names
+    # {ps} required
+
+    if(is_available("ps")){
+      psh <- ps::ps()
+      pshp <- merge(psh, pmap, by = "pid", suffixes = c("","_p"), all = FALSE)
+      jschk <- grepl("java|selenium", pshp$name)
+      # try on these with more timeout
+      if(!any(jschk)){
+        # else try all
+        jschk <- rep(TRUE, length(jschk))
+      }
+      c2 <- sapply(pshp$port[jschk], sys_is_port_running_selenium)
+      if(any(c2)){
+        # match that to c1
+        got_ports <- pshp$port[jschk][c2]
+        c1[pmap$port %in% got_ports] <- TRUE
+      }
+    }
+  }
+
+  if(any(c1)){
+    pmap$pid[c1]
+  }else{
+    NULL
+  }
+
+
+}

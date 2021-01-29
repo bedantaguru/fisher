@@ -51,8 +51,9 @@ diff_list <- function(l1, l2){
 # following logic is used for merging
 # 1) if node name matches, match further
 # 2) if same name node present first one is used
-# 3) if common nodes are not list (first one is used) (at  least any)
-# 4) all nodes (including uncommon nodes) are added back
+# 3) if only one common nodes are not list first one is used
+# 4) if both common nodes are not list c is used
+# 5) all nodes (including uncommon nodes) are added back
 
 merge_list <- function(l1, l2){
 
@@ -80,7 +81,12 @@ merge_list <- function(l1, l2){
     if(is.list(l1[[cn]]) & is.list(l2[[cn]])){
       lo[[cn]] <- merge_list(l1[[cn]], l2[[cn]])
     }else{
-      lo[[cn]] <- l1[[cn]]
+      if(!is.list(l1[[cn]]) & !is.list(l2[[cn]])){
+        lo[[cn]] <- c(l1[[cn]], l2[[cn]])
+      }else{
+        lo[[cn]] <- l1[[cn]]
+      }
+
     }
   }
 

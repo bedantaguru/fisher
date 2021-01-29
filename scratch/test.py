@@ -84,7 +84,7 @@ driver.get("opera://about")
 # this works huge help
 # https://github.com/operasoftware/operachromiumdriver/issues/72
 options = webdriver.ChromeOptions()
-opera_profile = r"C:\Users\Nil\Downloads\test"
+opera_profile = r"C:\Users\IG\AppData\Roaming\Opera Software\Opera Stable"
 options.add_argument('user-data-dir=' + opera_profile)
 # options._binary_location = 'C:/Users/Nil/Downloads/operadriver_win64/operadriver.exe'
 # driver = webdriver.Opera(executable_path="operadriver.exe",options=options)
@@ -99,7 +99,7 @@ options.add_argument('user-data-dir=' + opera_profile)
 # options._binary_location = 'C:/Users/Nil/Downloads/operadriver_win64/operadriver.exe'
 # driver = webdriver.Opera(executable_path="operadriver.exe",options=options)
 driver = webdriver.Opera(
-  executable_path="C:/Users/Nil/Downloads/operadriver_win64/operadriver.exe", 
+  executable_path="C:/Users/IG/AppData/Local/binman/binman_operadriver/win64/86.0.4240.80/operadriver_win64/operadriver.exe", 
   options=options)
 
 driver.get('https://api.ipify.org/?format=json"')

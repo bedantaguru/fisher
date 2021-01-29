@@ -29,3 +29,42 @@ wap_browser_config_implementer_chrome <- function(conf_lst){
       )
   )
 }
+
+wap_browser_config_implementer_edge <- function(conf_lst){
+  list(
+    `ms:edgeOptions` =
+      list(
+        prefs = conf_lst
+      )
+  )
+}
+
+wap_browser_config_implementer_opera <- function(conf_lst){
+  ecl <- list()
+  # this one works
+  if(is_available("jsonlite")){
+    tpf <- tempfile(pattern = "userDataDirOpera")
+    dir.create(tpf, showWarnings = FALSE)
+    tpfp <- file.path(tpf, "Preferences")
+    try({
+      writeLines(jsonlite::toJSON(conf_lst, auto_unbox = TRUE), tpfp)
+      ecl <- list(
+        `goog:chromeOptions` = list(
+          args = list(paste0('--user-data-dir=',normalizePath(tpf),'')))
+      )
+
+    }, silent = TRUE)
+  }
+
+
+  extra <- list(
+    # this mostly have no impacts
+    `goog:chromeOptions` =
+      list(
+        prefs = conf_lst
+      )
+  )
+
+  ecl <- merge_list(ecl, extra)
+  ecl
+}
