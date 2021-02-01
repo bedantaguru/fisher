@@ -78,10 +78,10 @@ merge_list <- function(l1, l2){
   }
 
   for(cn in cns){
-    if(is.list(l1[[cn]]) & is.list(l2[[cn]])){
+    if(is_named_list(l1[[cn]]) & is_named_list(l2[[cn]])){
       lo[[cn]] <- merge_list(l1[[cn]], l2[[cn]])
     }else{
-      if(!is.list(l1[[cn]]) & !is.list(l2[[cn]])){
+      if(!is_named_list(l1[[cn]]) & !is_named_list(l2[[cn]])){
         lo[[cn]] <- c(l1[[cn]], l2[[cn]])
       }else{
         lo[[cn]] <- l1[[cn]]
@@ -95,4 +95,13 @@ merge_list <- function(l1, l2){
   lo[unique(c(n1, n2))]
 
 
+}
+
+
+is_named_list <- function(l){
+  rt <- FALSE
+  if(is.list(l)){
+    if(!is.null(names(l))) rt <- TRUE
+  }
+  rt
 }

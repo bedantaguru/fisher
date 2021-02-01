@@ -3,6 +3,9 @@
 
 # https://peter.sh/experiments/chromium-command-line-switches/
 
+# test webdriver
+# https://intoli.com/blog/not-possible-to-block-chrome-headless/chrome-headless-test.html
+
 rd <- rst_remotedriver(browser = "opera")
 
 
