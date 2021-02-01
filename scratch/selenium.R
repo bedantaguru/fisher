@@ -9,11 +9,9 @@
 
 rst_remotedriver(
   browser = "chrome",
-  browser_config = list(
-    chromeOptions = list(
-      args = list('--window-size=600,600')
-    )
-  )
+  browser_config = wap_browser_config_implementer(
+    "chrome",
+    arg_lst = list('--window-size=600,600'))
 )$open()
 
 
