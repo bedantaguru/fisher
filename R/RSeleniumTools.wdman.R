@@ -2,6 +2,48 @@
 
 rst_wdman_selenium_info_env <- new.env()
 
+# fill rst_wdman_selenium_info_env in case rst_wdman_selenium_info_env is not
+# populated by rst_wdman_selenium_launcher may be useful for later found
+# selenium instance.
+#
+# full_control = TRUE gives kill capabality to selenium (by default it is TRUE)
+rst_wdman_selenium_fill_info_env <- function(spid, pmap, full_control = TRUE){
+
+  try({
+
+    if(!missing(pmap)){
+
+      assign( "s_port", pmap$port[ pmap$pid == spid ],
+              envir = rst_wdman_selenium_info_env)
+
+      if(full_control & is_available("ps")){
+
+        # this has to match all use sections in the code
+        sel <- list(process = list(
+          kill_tree = function(){
+            sys_ps_kill_tree(ps::ps_handle(spid))
+          },
+          as_ps_handle = function(){
+            ps::ps_handle(spid)
+          },
+          get_pid = function(){
+            spid
+          },
+          is_alive = function(){
+            ps::ps_is_running(ps::ps_handle(spid))
+          })
+        )
+
+        assign( "s_handle", sel, envir = rst_wdman_selenium_info_env)
+      }
+
+    }
+
+  },silent = TRUE)
+
+  invisible(0)
+}
+
 rst_wdman_selenium_launcher <- function(
   port = NULL,
   selenium_version = c("dev","stable"),

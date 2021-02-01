@@ -110,7 +110,9 @@ sys_get_a_port <- function(
           try({
             early_pid <- pmap$pid[pmap$port==this_port]
             ph <- ps::ps_handle(as.integer(early_pid)[1])
-            ps::ps_kill(ph)
+            # simple kill ps::ps_kill(ph)
+            # but since we have better alternative :-)
+            sys_ps_kill_tree(ph)
             Sys.sleep(0.1)
             if(!ps::ps_is_running(ph)){
               # update pmap
@@ -213,6 +215,11 @@ sys_find_selenium_pid <- function(full_search = TRUE){
     pmap_small <-pmap[pmap$pid %in% child_pids,]
     c0 <- sapply(pmap_small$port, sys_is_port_running_selenium)
     if(any(c0)){
+      # set rst_wdman_selenium_info_env to the extent possible
+      rst_wdman_selenium_fill_info_env(
+        pmap_small$pid[c0],
+        pmap_small
+      )
       return(pmap_small$pid[c0])
     }
   }
@@ -235,7 +242,9 @@ sys_find_selenium_pid <- function(full_search = TRUE){
         # else try all
         jschk <- rep(TRUE, length(jschk))
       }
-      c2 <- sapply(pshp$port[jschk], sys_is_port_running_selenium)
+      c2 <- sapply(pshp$port[jschk],
+                   sys_is_port_running_selenium,
+                   timeout_sec = 1)
       if(any(c2)){
         # match that to c1
         got_ports <- pshp$port[jschk][c2]
@@ -245,10 +254,15 @@ sys_find_selenium_pid <- function(full_search = TRUE){
   }
 
   if(any(c1)){
-    pmap$pid[c1]
-  }else{
-    NULL
+    # set rst_wdman_selenium_info_env to the extent possible
+    rst_wdman_selenium_fill_info_env(
+      pmap$pid[c1],
+      pmap
+    )
+    return(pmap$pid[c1])
   }
+
+  return(NULL)
 
 
 }
