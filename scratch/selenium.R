@@ -7,6 +7,47 @@
 #
 
 
+rst_remotedriver(
+  browser = "chrome",
+  browser_config = list(
+    chromeOptions = list(
+      args = list('--window-size=600,600')
+    )
+  )
+)$open()
+
+
+rst_remotedriver(
+  browser = "firefox",
+  browser_config = list(
+    `moz:firefoxOptions` = list(
+      #args = list('--window-size=1900,500')
+      args = list('--width=600',
+                  '--height=600')
+    )
+  )
+)$open()
+
+
+rst_remotedriver(
+  browser = "edge",
+  browser_config = list(
+    `ms:edgeOptions` = list(
+      args = list('--window-size=600,600')
+    )
+  )
+)$open()
+
+
+rst_remotedriver(
+  browser = "opera",
+  browser_config = list(
+    `goog:chromeOptions` = list(
+      args = list('--window-size=600,600')
+    )
+  )
+)$open()
+
 
 se <- wdman::selenium(check = F, chromever = "86.0.4240.22")
 

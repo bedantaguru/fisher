@@ -2,16 +2,22 @@
 # as of now it is tuned for rst
 # (or RSelenium)
 # RSelenium::remoteDriver(extraCapabilities = <to put the output here>)
-wap_browser_config_implementer <- function(conf_lst){
+wap_browser_config_implementer <- function(browser, conf_lst, arg_lst){
   # early exits
   if(missing(conf_lst)) return(list())
   if(is.null(conf_lst)) return(list())
   if(length(conf_lst)==0) return(list())
 
+  browser <- wap_valid_browser(browser)
+
+  do.call(what = paste0("wap_browser_config_implementer_",browser),
+          args = list(conf_lst = conf_lst))
 }
 
 
 wap_browser_config_implementer_firefox <- function(conf_lst){
+  # ref :
+  # https://firefox-source-docs.mozilla.org/main/65.0/testing/geckodriver/geckodriver/Capabilities.html
   list(
     `moz:firefoxOptions` =
       list(
@@ -19,7 +25,6 @@ wap_browser_config_implementer_firefox <- function(conf_lst){
       )
   )
 }
-
 
 wap_browser_config_implementer_chrome <- function(conf_lst){
   list(

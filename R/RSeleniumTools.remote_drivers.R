@@ -51,6 +51,22 @@ rst_remotedriver <- function(
   # configurable (if wanted) (rest are set by {fisher} or defined alternatively)
   browser <- wap_valid_browser(browser)
 
+  if(!exists("s_port", envir = rst_wdman_selenium_info_env)){
+    stop("Kindly make sure selenium is running / correctly setup",
+         call. = FALSE)
+  }
+
+  if(exists("s_handle", envir = rst_wdman_selenium_info_env)){
+    if(!rst_wdman_selenium_info_env$s_handle$process$is_alive()){
+      stop("Kindly make sure selenium is running (it seems it is stopped)",
+           call. = FALSE)
+    }
+  }else{
+    # can not check state of selenium
+    # this can be intentional or non-intentional
+    cat("\nCan not check state of selenium.\n")
+  }
+
   # @Dev
   # qick tap
 
