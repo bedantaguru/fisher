@@ -1,6 +1,6 @@
 
-
-rst_remotedriver_specific_config_chrome <- function(
+rst_remotedriver_specific_config <- function(
+  browser,
   # proxy
   proxy = FALSE,
   proxy_host = "localhost", proxy_port = 8888L,
@@ -8,6 +8,29 @@ rst_remotedriver_specific_config_chrome <- function(
   headless = FALSE,
   # 1.4 Download folder
   download_capture = FALSE, download_folder
+){
+  do.call(
+    paste0("rst_remotedriver_specific_config_",browser),
+    args = list(
+      proxy = proxy,
+      proxy_host = proxy_host,
+      proxy_port = proxy_port,
+      best_known_settings = best_known_settings,
+      headless = headless,
+      download_capture = download_capture,
+      download_folder = download_folder))
+}
+
+
+rst_remotedriver_specific_config_chromium <- function(
+  # proxy
+  proxy = FALSE,
+  proxy_host = "localhost", proxy_port = 8888L,
+  best_known_settings = TRUE,
+  headless = FALSE,
+  # 1.4 Download folder
+  download_capture = FALSE, download_folder,
+  chromium_browser = "chrome"
 ){
 
   # ref
@@ -18,10 +41,10 @@ rst_remotedriver_specific_config_chrome <- function(
     # proxy is set at argument level
     # Ref
     # https://www.chromium.org/developers/design-documents/network-settings
-    pl  <- wap_browser_config_implementer_chrome(
-      arg_lst = list(
-        paste0('--proxy-server=',proxy_host,':', proxy_port)
-      ))
+    pl  <- wap_browser_config_implementer(browser = chromium_browser,
+                                          arg_lst = list(
+                                            paste0('--proxy-server=',proxy_host,':', proxy_port)
+                                          ))
 
     cnf <- merge_list(cnf, pl)
   }
@@ -32,7 +55,8 @@ rst_remotedriver_specific_config_chrome <- function(
     # https://github.com/ropensci/RSelenium/issues/207
     # https://stackoverflow.com/questions/57298901/
     #
-    bks  <- wap_browser_config_implementer_chrome(
+    bks  <- wap_browser_config_implementer(
+      browser = chromium_browser,
       arg_lst = list('--window-size=1280,800',
                      '--no-sandbox',
                      '--ignore-certificate-errors',
@@ -47,7 +71,8 @@ rst_remotedriver_specific_config_chrome <- function(
   if(headless){
     # Ref
     # https://www.scrapingbee.com/blog/introduction-to-chrome-headless/
-    hl  <- wap_browser_config_implementer_chrome(
+    hl  <- wap_browser_config_implementer(
+      browser = chromium_browser,
       arg_lst = list('--headless',
                      '--disable-gpu',
                      '--disable-extensions',
@@ -59,7 +84,8 @@ rst_remotedriver_specific_config_chrome <- function(
 
   if(download_capture){
 
-    dl  <- wap_browser_config_implementer_chrome(
+    dl  <- wap_browser_config_implementer(
+      browser = chromium_browser,
       conf_lst = list(
         savefile =
           list(default_directory = normalizePath(download_folder)),
@@ -76,8 +102,84 @@ rst_remotedriver_specific_config_chrome <- function(
 
 }
 
+rst_remotedriver_specific_config_chrome <- function(
+  proxy = FALSE,
+  proxy_host = "localhost", proxy_port = 8888L,
+  best_known_settings = TRUE,
+  headless = FALSE,
+  # 1.4 Download folder
+  download_capture = FALSE, download_folder
+){
+  rst_remotedriver_specific_config_chromium(
+    proxy = proxy,
+    proxy_host = proxy_host, proxy_port = proxy_port,
+    best_known_settings = best_known_settings,
+    headless = headless,
+    download_capture = download_capture,
+    download_folder = download_folder,
+    chromium_browser = "chrome"
+  )
+}
 
-#@Dev
+rst_remotedriver_specific_config_edge <- function(
+  proxy = FALSE,
+  proxy_host = "localhost", proxy_port = 8888L,
+  best_known_settings = TRUE,
+  headless = FALSE,
+  # 1.4 Download folder
+  download_capture = FALSE, download_folder
+){
+  rst_remotedriver_specific_config_chromium(
+    proxy = proxy,
+    proxy_host = proxy_host, proxy_port = proxy_port,
+    best_known_settings = best_known_settings,
+    headless = headless,
+    download_capture = download_capture,
+    download_folder = download_folder,
+    chromium_browser = "edge"
+  )
+}
+
+rst_remotedriver_specific_config_opera <- function(
+  proxy = FALSE,
+  proxy_host = "localhost", proxy_port = 8888L,
+  best_known_settings = TRUE,
+  headless = FALSE,
+  # 1.4 Download folder
+  download_capture = FALSE, download_folder,
+  turn_on_inbuilt_VPN = FALSE
+){
+  l <- rst_remotedriver_specific_config_chromium(
+    proxy = proxy,
+    proxy_host = proxy_host, proxy_port = proxy_port,
+    best_known_settings = best_known_settings,
+    headless = headless,
+    download_capture = download_capture,
+    download_folder = download_folder,
+    chromium_browser = "opera"
+  )
+
+  if(turn_on_inbuilt_VPN){
+
+    # recorded and supervised
+    vpnl <- wap_browser_config_implementer_opera(
+      conf_lst = list(
+        settings_page = list(vpn_disclaimer_enabled = FALSE),
+        webrtc = list(ip_handling_policy = "disable_non_proxied_udp"),
+        freedom = list(proxy_switcher = list(
+          automatic_connection = TRUE, enabled = TRUE,
+          last_ui_interaction_time = as.integer(Sys.time()),
+          ui_visible = TRUE)),
+        profile = list(default_content_setting_values = list(
+          plugins = 3L))),
+      user_data_dir = wap_browser_config_implementer_opera_prior_profile(l))
+
+    l <- merge_list(l, vpnl)
+  }
+
+  l
+}
+
 rst_remotedriver_specific_config_firefox <- function(
   # proxy
   proxy = FALSE,
@@ -109,23 +211,16 @@ rst_remotedriver_specific_config_firefox <- function(
       network.proxy.type = 1
     )
 
+    pl  <- wap_browser_config_implementer_firefox(
+      conf_lst = sf
+    )
 
+    cnf <- merge_list(cnf, pl)
 
   }
 
   if(best_known_settings){
-    # @Dev
-    # Ref
-    #
-    # https://github.com/ropensci/RSelenium/issues/207
-    # https://stackoverflow.com/questions/57298901/
-    #
-    bks  <- wap_browser_config_implementer_firefox(
-      arg_lst = list(),
-      raw_lst = list(excludeSwitches = list("enable-automation"),
-                     useAutomationExtension = FALSE))
-
-    cnf <- merge_list(cnf, bks)
+    # No known best setting
   }
 
   if(headless){
@@ -137,9 +232,13 @@ rst_remotedriver_specific_config_firefox <- function(
   }
 
   if(download_capture){
-    # @Dev
+    # ref
+    # https://developer.mozilla.org/en-US/docs/Archive/Mozilla/Download_Manager_preferences
 
-    dl  <- wap_browser_config_implementer_firefox()
+    dl  <- wap_browser_config_implementer_firefox(
+      conf_lst = list(
+        browser.download.dir = download_folder,
+        browser.download.folderList = 2L))
 
     cnf <- merge_list(cnf, dl)
   }
@@ -147,3 +246,6 @@ rst_remotedriver_specific_config_firefox <- function(
   cnf
 
 }
+
+
+

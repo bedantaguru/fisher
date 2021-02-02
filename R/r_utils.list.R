@@ -55,7 +55,7 @@ diff_list <- function(l1, l2){
 # 4) if both common nodes are not list c is used
 # 5) all nodes (including uncommon nodes) are added back
 
-merge_list <- function(l1, l2){
+merge_list <- function(l1, l2, verbose = FALSE){
 
   n1 <- names(l1)
   n2 <- names(l2)
@@ -81,9 +81,22 @@ merge_list <- function(l1, l2){
     if(is_named_list(l1[[cn]]) & is_named_list(l2[[cn]])){
       lo[[cn]] <- merge_list(l1[[cn]], l2[[cn]])
     }else{
-      if(!is_named_list(l1[[cn]]) & !is_named_list(l2[[cn]])){
-        lo[[cn]] <- c(l1[[cn]], l2[[cn]])
+      if((!is_named_list(l1[[cn]]) & is.list(l1[[cn]])) &
+         (!is_named_list(l2[[cn]]) & is.list(l2[[cn]]))){
+        # specific case when nodes are not named lists but lists
+        lo[[cn]] <- unique(c(l1[[cn]], l2[[cn]]))
       }else{
+        # take 1st in all other cases
+        # or unique(c(l1[[cn]], l2[[cn]])) can be taken
+        if(verbose){
+          chkl <- length(unique(c(l1[[cn]], l2[[cn]])))
+          if(chkl!=1) cat(
+            paste0("\nnode:",cn,
+                   " has more than one common value. Which are ",
+                   paste0(unique(c(l1[[cn]], l2[[cn]])), collapse = ", "),
+                   "\n"))
+        }
+
         lo[[cn]] <- l1[[cn]]
       }
 

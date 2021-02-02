@@ -9,6 +9,8 @@
 rd <- rst_remotedriver(browser = "opera")
 
 
+# https://stackoverflow.com/questions/53039551/selenium-webdriver-modifying-navigator-webdriver-flag-to-prevent-selenium-detec/53040904#53040904
+
 #wap_browser_config_implementer_chrome()
 ##########################
 # edge

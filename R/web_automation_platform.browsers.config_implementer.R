@@ -166,7 +166,8 @@ wap_browser_config_implementer_edge <- function(
 wap_browser_config_implementer_opera <- function(
   conf_lst = NULL,
   arg_lst = NULL,
-  raw_lst = NULL
+  raw_lst = NULL,
+  user_data_dir = NULL
 ){
 
 
@@ -187,10 +188,24 @@ wap_browser_config_implementer_opera <- function(
     ecl <- list()
     # this one works
     if(is_available("jsonlite")){
-      tpf <- tempfile(pattern = "userDataDirOpera")
+      # read back config and add to it
+      read_back_config <- FALSE
+      if(is.null(user_data_dir)){
+        tpf <- tempfile(pattern = "userDataDirOpera")
+      }else{
+        tpf <- user_data_dir
+        if(dir.exists(tpf)){
+          read_back_config <- TRUE
+        }
+      }
+
       dir.create(tpf, showWarnings = FALSE)
       tpfp <- file.path(tpf, "Preferences")
       try({
+        if(read_back_config){
+          prior_cnf <- jsonlite::fromJSON(tpfp)
+          conf_lst <- merge_list(prior_cnf, conf_lst)
+        }
         writeLines(jsonlite::toJSON(conf_lst, auto_unbox = TRUE), tpfp)
         ecl <- list(
           `goog:chromeOptions` = list(
@@ -226,4 +241,62 @@ wap_browser_config_implementer_opera <- function(
 
   l
 
+}
+
+
+wap_browser_config_implementer_opera_prior_profile <- function(l){
+
+  prior_profile <- NULL
+
+  if(!is.null(l$`goog:chromeOptions`$args)){
+    nl <- unlist(l$`goog:chromeOptions`$args)
+    if(any(grepl("user-data-dir", nl))){
+      pd <- nl[grepl("user-data-dir", nl)]
+      pd <- rev(strsplit(pd, "=|= +")[[1]])[1]
+      if(dir.exists(pd)){
+        prior_profile <- pd
+      }
+    }
+  }
+
+  prior_profile
+}
+
+
+wap_browser_config_appender <- function(browser, c1, c2){
+  browser <- wap_valid_browser(browser)
+  l <- list()
+  if(browser == "opera"){
+    # special case for opera only
+    # read them separately and then merge back
+    p1 <- wap_browser_config_implementer_opera_prior_profile(c1)
+    p2 <- wap_browser_config_implementer_opera_prior_profile(c2)
+
+    if(!is.null(p2) & !is.null(p1)){
+      # removing --user-data-dir entry from c2
+      if(length(c2$`goog:chromeOptions`$args)==1){
+        c2$`goog:chromeOptions`$args <-NULL
+      }else{
+        nds <- unlist(c2$`goog:chromeOptions`$args)
+        c2$`goog:chromeOptions`$args <-
+          c2$`goog:chromeOptions`$args[-which(grepl("--user-data-dir",nds))]
+      }
+
+      c2prior <- wap_browser_config_reader_opera(p2)
+      # we can delete it if required
+      # but keeping it (as it can be a non temp folder)
+      # just writing c2 config also in c1 profile
+      wap_browser_config_implementer_opera(
+        conf_lst = c2prior,
+        user_data_dir = p1)
+
+    }
+
+    l <- merge_list(c1, c2)
+
+
+  }else{
+    l <- merge_list(c1, c2)
+  }
+  l
 }

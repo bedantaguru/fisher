@@ -26,7 +26,9 @@ rst_remotedriver <- function(
   # 3. Documented Arguments (whichever are configurable)
   remoteServerAddr = "localhost",
   version = "", platform = "ANY", javascript = TRUE,
-  # 4. Further argument
+  # 4. For running without any configurations
+  vanilla = FALSE,
+  # 5. Further argument
   ...
 ){
   # As per the documentation of remoteDriver-class {RSelenium} Documented
@@ -67,17 +69,29 @@ rst_remotedriver <- function(
     cat("\nCan not check state of selenium.\n")
   }
 
-  # @Dev
-  # qick tap
-
   # soo big name! making small
   rst_wsrcbn <-rst_webdriver_selenium_remote_client_browser_names
 
   ecaps <- list()
 
-  if(!missing(browser_config)){
-    ecaps <- browser_config
+  if(!vanilla){
+    # this browser settings
+    tbs <- rst_remotedriver_specific_config(
+      browser = browser,
+      proxy = proxy, proxy_host = proxy_host, proxy_port = proxy_port,
+      best_known_settings = best_known_settings,
+      headless = headless, download_capture = download_capture,
+      download_folder = download_folder)
+
+    if(!missing(browser_config)){
+      ecaps <- wap_browser_config_appender(
+        browser,
+        tbs, browser_config
+      )
+    }
+
   }
+
 
   RSelenium::remoteDriver(
     remoteServerAddr = remoteServerAddr,
