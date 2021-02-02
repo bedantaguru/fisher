@@ -20,7 +20,7 @@ rst_remotedriver <- function(
   # 1.3 Headless mode (equivalent)
   headless = FALSE,
   # 1.4 Download folder
-  download_capture = FALSE, download_folder,
+  download_capture = FALSE, download_folder = tempdir(),
   # 2. Additional configuration if required
   browser_config,
   # 3. Documented Arguments (whichever are configurable)
@@ -82,6 +82,8 @@ rst_remotedriver <- function(
       best_known_settings = best_known_settings,
       headless = headless, download_capture = download_capture,
       download_folder = download_folder)
+
+    ecaps <- tbs
 
     if(!missing(browser_config)){
       ecaps <- wap_browser_config_appender(

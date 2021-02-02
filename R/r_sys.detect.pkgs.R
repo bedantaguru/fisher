@@ -31,7 +31,7 @@ not_available <- function(pkgs, add = TRUE) {
       if (is.character(pkgs)) {
         if (add) {
           old <- pkg_availability_sim$na_pkgs
-          pkgs <- c(old, pkgs) %>% unique()
+          pkgs <- unique(c(old, pkgs))
         }
         pkg_availability_sim$na_pkgs <- pkgs
       }
