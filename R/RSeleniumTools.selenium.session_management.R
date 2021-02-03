@@ -114,3 +114,42 @@ rst_ssm_attach_to_active_session <- function(client, session_id){
   }
   invisible(0)
 }
+
+# this is dependent on rst_wap_config
+rst_ssm_find_free_session_id <- function(){
+
+  all_sessions <- rst_ssm_get_active_sessions(no_check = TRUE)
+
+  if(length(all_sessions) == 0 ) return(NULL)
+
+  all_sids <- names(all_sessions)
+  ws <- rst_wap_config()
+
+  ppids <- as.integer(unlist(ws$rst$get_pid(all_sids)))
+  i <- 1
+  found <- FALSE
+  repeat{
+    pp <- ppids[i]
+    sid <- all_sids[i]
+    psid <- ws$rst$get_sid(pp)
+    if(is.null(psid)) psid <- ""
+    if((
+      # either pid is dead
+      !sys_is_pid_active(pp) |
+      # or pid is not using the sid
+      psid!=sid ) &
+      # the sid is active
+      rst_ssm_is_active(sid)){
+      found <- TRUE
+      break()
+    }
+    i <- i+1
+    if(i==length(ppids)) break()
+  }
+
+  if(found){
+    sid
+  }else{
+    NULL
+  }
+}

@@ -137,6 +137,11 @@ web_control_client <- function(){
     }
   }
 
+  if(is.null(psid)){
+    # one more try to find free sid
+    psid <- rst_ssm_find_free_session_id()
+  }
+
   shared_config <- ws$read("wap_rst_client_config", R_object = TRUE)
   if(is.null(shared_config)) shared_config <- list()
 

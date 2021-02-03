@@ -24,13 +24,23 @@ persistent_object_store <- function(
   store_dir <- NULL
   d_mode <- NA
 
-  # option 1
-  # running in RStudio (use local file)
+  # option 1 running in RStudio (use local file) or someone started a
+  # persistent_object_store under RStudio (specifically for non interactive
+  # cases)
   if(scope != "user"){
-    if(exists(".rs.getProjectDirectory")){
-      pd <- get(".rs.getProjectDirectory")()
-      if(!is.null(pd)){
-        store_dir <- file.path(pd, paste0(".",appname))
+    if(interactive()){
+      if(exists(".rs.getProjectDirectory")){
+        pd <- get(".rs.getProjectDirectory")()
+        if(!is.null(pd)){
+          store_dir <- file.path(pd, paste0(".",appname))
+          d_mode <- "project"
+        }
+      }
+    }else{
+      pd <- getwd()
+      store_dir_chk <- file.path(pd, paste0(".",appname))
+      if(dir.exists(store_dir_chk)){
+        store_dir <- store_dir_chk
         d_mode <- "project"
       }
     }

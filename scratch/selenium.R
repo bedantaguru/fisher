@@ -9,10 +9,32 @@
 
 cls <- parallel::makeCluster(parallel::detectCores())
 
+fisher::web_automation_platform()
+
 parallel::clusterApply(cls, seq(parallel::detectCores()), function(x) Sys.getpid())
 parallel::clusterApply(cls, seq(parallel::detectCores()), function(x) getwd())
 
 parallel::clusterApply(cls, seq(parallel::detectCores()), function(x) fisher::web_control_client())
+
+parallel::clusterApply(cls, seq(parallel::detectCores()), function(x){
+  rd <- fisher::web_control_client()
+  rd$navigate(paste0("https://www.google.com/search?q=",x))
+})
+
+paste0("https://www.google.com/search?q=")
+
+parallel::stopCluster(cls)
+
+# parallel::clusterApply(cls, seq(parallel::detectCores()),
+#                        function(x) {
+#                          ws <- fisher:::rst_wap_config()
+#                          ws$rst$bind_pid_sid(Sys.getpid(),x)
+#                          ws$write(x, value = ws, R_object = T)
+#                          saveRDS(ws, file.path(ws$store_path, "robj", x))
+#                          file.path(ws$store_path, "robj", x)
+#                          file.exists(file.path(ws$store_path, "robj", x))
+#                        })
+
 
 
 
