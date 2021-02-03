@@ -48,7 +48,8 @@ search_alternatives <- function(
 
 }
 
-# environment kept for storing "alternatives" for methods which opt for registration on the fly.
+# environment kept for storing "alternatives" for methods which opt for
+# registration on the fly.
 alternatives_env <- new.env()
 
 register_alternatives <- function(){

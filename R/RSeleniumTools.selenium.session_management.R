@@ -11,36 +11,48 @@ rst_ssm_get_control_client <- function(){
     rcc <- rst_ssm_quick_access_env$rcc
   }else{
     rcc <- rst_remotedriver(vanilla = TRUE)
-    assign("rcc", envir = rst_ssm_quick_access_env)
+    assign("rcc", rcc, envir = rst_ssm_quick_access_env)
   }
   rcc
 }
 
 rst_ssm_get_active_sessions <- function(
   close_inactive_sessions = TRUE,
-  return_test_function = FALSE
+  return_test_function = FALSE,
+  # it does not server the proper purpose of the function but is faster as it
+  # does not check all sessions ids (just list them)
+  no_check = FALSE
 ){
+
   rcc <- rst_ssm_get_control_client()
   rcenv <- environment(rcc$open)
 
-  test_id_raw <- function(id){
-    qpath <- sprintf("%s/session/%s/url", rcenv$serverURL, id)
-    rcenv$queryRD(qpath)
-    !("message" %in% names(rcenv$.self$value))
-  }
+  # define test_id
+  if(exists("test_id", envir = rst_ssm_quick_access_env)){
+    test_id <- rst_ssm_quick_access_env$test_id
+  }else{
 
-  test_id <- function(id){
-    if(missing(id)){
-      id <- rcenv$sessionid
+    test_id_raw <- function(id){
+      qpath <- sprintf("%s/session/%s/url", rcenv$serverURL, id)
+      suppressMessages(rcenv$queryRD(qpath))
+      !("message" %in% names(rcenv$.self$value))
     }
-    chk <- tryCatch(
-      test_id_raw(id),
-      error = function(e) FALSE)
-    if(!is.logical(chk)){
-      FALSE
-    }else{
-      chk[1]
+
+    test_id <- function(id){
+      if(missing(id)){
+        id <- rcenv$sessionid
+      }
+      chk <- tryCatch(
+        test_id_raw(id),
+        error = function(e) FALSE)
+      if(!is.logical(chk)){
+        FALSE
+      }else{
+        chk[1]
+      }
     }
+
+    assign("test_id", test_id, envir = rst_ssm_quick_access_env)
   }
 
   #  in case only test function is required (early exit)
@@ -55,7 +67,14 @@ rst_ssm_get_active_sessions <- function(
 
   all_sessions_id <- sapply(all_sessions, "[[","id")
 
-  all_sessions_chk <- suppressMessages(sapply(all_sessions_id, test_id))
+  names(all_sessions) <- all_sessions_id
+
+  # early exit without checking
+  if(no_check){
+    return(all_sessions)
+  }
+
+  all_sessions_chk <- sapply(all_sessions_id, test_id)
 
   active_sessions <- all_sessions[all_sessions_chk]
 
@@ -63,9 +82,9 @@ rst_ssm_get_active_sessions <- function(
     # close inactive (orphaned or killed manually) sessions
     close_id <- function(id){
       qpath <- sprintf("%s/session/%s", rcenv$serverURL, id)
-      try(rcenv$queryRD(qpath, "DELETE"), silent = TRUE)
+      suppressMessages(try(rcenv$queryRD(qpath, "DELETE"), silent = TRUE))
     }
-    suppressMessages(lapply(all_sessions_id[!all_sessions_chk], close_id))
+    lapply(all_sessions_id[!all_sessions_chk], close_id)
   }
 
   active_sessions
@@ -78,11 +97,20 @@ rst_ssm_is_active <- function(session_id){
     is_active <- rst_ssm_quick_access_env$is_active
   }else{
     is_active <- rst_ssm_get_active_sessions(return_test_function = TRUE)
-    assign("is_active", envir = rst_ssm_quick_access_env)
+    assign("is_active", is_active,  envir = rst_ssm_quick_access_env)
   }
   is_active(session_id)
 }
 
 rst_ssm_attach_to_active_session <- function(client, session_id){
   chk <- rst_ssm_is_active(session_id)
+  if(chk){
+    cenv <- environment(client$open)
+    all_sessions <- rst_ssm_get_active_sessions(no_check = TRUE)
+    this_session <- all_sessions[[session_id]]
+
+    assign("sessionInfo", this_session, envir = cenv)
+    assign("sessionid", session_id, envir = cenv)
+  }
+  invisible(0)
 }

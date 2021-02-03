@@ -50,6 +50,7 @@ persistent_object_store <- function(
   # option 3
   # rappdirs
   if(is.null(store_dir) & (scope != "project")){
+    # it is a standalone file hence not using is_available
     if(requireNamespace("rappdirs", quietly = TRUE)){
       store_dir <- rappdirs::user_config_dir(appname, authname)
       d_mode <- "user"
@@ -65,32 +66,58 @@ persistent_object_store <- function(
   handle$store_path <- store_dir
   handle$file_mode <- d_mode
 
-  handle$write <- function(what, value, lst){
-    if(!dir.exists(store_dir)){
-      dir.create(store_dir, recursive = TRUE)
-    }
+  # write method
+  handle$write <- function(what, value, lst, R_object = FALSE){
+
     if(!missing(lst)){
       what <- names(lst)
       value <- unlist(lst)
     }
-    fn <- file.path(store_dir, what)
+
+    if(R_object){
+
+      if(!dir.exists(file.path(store_dir, "robj"))){
+        dir.create(file.path(store_dir, "robj"), recursive = TRUE)
+      }
+
+      fn <- file.path(store_dir, "robj", what)
+    }else{
+
+      if(!dir.exists(file.path(store_dir, "str"))){
+        dir.create(file.path(store_dir, "str"), recursive = TRUE)
+      }
+
+      fn <- file.path(store_dir, "str", what)
+    }
+
     lapply(
       seq_along(fn),
       function(i){
-        tryCatch(
-          writeLines(value[i], fn[i]),
-          error = function(e) NULL)
+        tryCatch({
+          if(R_object){
+            saveRDS(value[i], fn[i])
+          }else{
+            writeLines(as.character(value[i]), fn[i])
+          }
+        }, error = function(e) NULL)
       }
     )
     invisible(0)
   }
 
-  handle$read <- function(what, all = FALSE){
+  # read method Note: if what is singleton then result will be singleton in all
+  # other cases it will be list
+  handle$read <- function(what, all = FALSE, R_object = FALSE){
 
     v <- NULL
 
     if(all){
-      afs <- list.files(store_dir)
+      if(R_object){
+        afs <- list.files(file.path(store_dir, "robj"))
+      }else{
+        afs <- list.files(file.path(store_dir, "str"))
+      }
+
       if(length(afs)>0){
         what <- afs
       }else{
@@ -99,21 +126,38 @@ persistent_object_store <- function(
       }
     }
 
-    fn <- file.path(store_dir, what)
+    if(R_object){
+      fn <- file.path(store_dir, "robj", what)
+    }else{
+      fn <- file.path(store_dir, "str", what)
+    }
 
 
-    if(all){
+    if(all | length(fn)>1){
       v <- lapply(
         seq_along(fn),
         function(i){
           # file will be present for sure
-          readLines(fn[i])
+          tryCatch({
+            if(R_object){
+              readRDS(fn[i])
+            }else{
+              readLines(fn[i], warn = FALSE)
+            }
+          }, error = function(e) NULL)
+
         }
       )
       names(v) <- what
     }else{
+
+      # single value in case only single key is requested
       if(file.exists(fn)){
-        v <- readLines(fn)
+        if(R_object){
+          v <- readRDS(fn)
+        }else{
+          v <- readLines(fn)
+        }
       }
     }
 
@@ -121,12 +165,14 @@ persistent_object_store <- function(
     invisible(v)
   }
 
+  # destroy method
   handle$destroy <- function(){
     if(dir.exists(store_dir)){
       unlink(store_dir, recursive = TRUE)
     }
   }
 
+  # open location but kept mainly for debugging
   handle$open_location <- function(){
     if(dir.exists(store_dir)){
       ifelse(interactive(), isFALSE(utils::browseURL(store_dir)), TRUE)

@@ -20,15 +20,17 @@ rst_remotedriver <- function(
   # 1.3 Headless mode (equivalent)
   headless = FALSE,
   # 1.4 Download folder
-  download_capture = FALSE, download_folder = tempdir(),
+  download_capture = FALSE, download_folder = ".",
   # 2. Additional configuration if required
-  browser_config,
+  browser_config = NULL,
   # 3. Documented Arguments (whichever are configurable)
   remoteServerAddr = "localhost",
   version = "", platform = "ANY", javascript = TRUE,
   # 4. For running without any configurations
   vanilla = FALSE,
-  # 5. Further argument
+  # 5. Pass config as list (which can be used later to call this function)
+  get_config_list_only = FALSE,
+  # 6. Further argument
   ...
 ){
   # As per the documentation of remoteDriver-class {RSelenium} Documented
@@ -52,6 +54,29 @@ rst_remotedriver <- function(
   # Among these only remoteServerAddr, version, platform and javascript is
   # configurable (if wanted) (rest are set by {fisher} or defined alternatively)
   browser <- wap_valid_browser(browser)
+
+  if(get_config_list_only){
+    cnfl <- list(browser=browser,
+                 proxy = proxy,
+                 proxy_host = proxy_host,
+                 proxy_port = proxy_port,
+                 best_known_settings = best_known_settings,
+                 headless = headless,
+                 download_capture = download_capture,
+                 download_folder = download_folder,
+                 browser_config = browser_config,
+                 remoteServerAddr = remoteServerAddr,
+                 version = version,
+                 platform = platform,
+                 javascript = javascript,
+                 vanilla = vanilla)
+    if(!missing(...)){
+      #  not much tested :-)
+      cnfl$`...` <- list(...)
+    }
+    # exit without doing anything else
+    return(cnfl)
+  }
 
   if(!exists("s_port", envir = rst_wdman_selenium_info_env)){
     stop("Kindly make sure selenium is running / correctly setup",
@@ -85,7 +110,7 @@ rst_remotedriver <- function(
 
     ecaps <- tbs
 
-    if(!missing(browser_config)){
+    if(!is.null(browser_config)){
       ecaps <- wap_browser_config_appender(
         browser,
         tbs, browser_config
@@ -103,6 +128,7 @@ rst_remotedriver <- function(
     extraCapabilities = ecaps,
     version = version,
     platform = platform,
-    javascript = javascript)
+    javascript = javascript,
+    ...)
 
 }

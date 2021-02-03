@@ -201,6 +201,30 @@ sys_find_selenium_pid <- function(full_search = TRUE){
     }
   }
 
+  # quick detection based on shared config search
+  ws <- rst_wap_config()
+  ppid <- ws$read("wap_rst_pid")
+  pport <- ws$read("wap_rst_port")
+
+  if(!is.null(ppid)){
+    ppid <- as.integer(ppid)
+    if(sys_is_pid_active(ppid)){
+      if(!is.null(pport)){
+        pport <- as.integer(pport)
+        rst_wdman_selenium_fill_info_env(
+          ppid,
+          data.frame(pid = ppid, port = pport)
+        )
+      }else{
+        rst_wdman_selenium_fill_info_env(
+          ppid,
+          sys_get_pid_port_map()
+        )
+      }
+      return(ppid)
+    }
+  }
+
   pmap <- sys_get_pid_port_map()
 
   # early exit

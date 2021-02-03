@@ -64,12 +64,16 @@ sys_use_os_specific_method <- function(fname){
   found <- FALSE
   # call direct method if present
   # if not search of alternative names
-  if(!exists(call_f_name)){
+  if(!exists(call_f_name, envir = asNamespace("fisher"))){
     alt_names <- sys_os_alt_names(os)
     alt_names <- setdiff(alt_names, os)
     if(length(alt_names)>0){
       call_f_names <- paste0(fname, "_", alt_names)
-      call_f_names_chk <-sapply(call_f_names, exists)
+      call_f_names_chk <-sapply(
+        call_f_names,
+        exists,
+        envir = asNamespace("fisher")
+      )
       if(any(call_f_names_chk)){
         call_f_name <- call_f_names[which(call_f_names_chk)[1]]
         # definition / method found using alternative string

@@ -7,7 +7,7 @@ rst_remotedriver_specific_config <- function(
   best_known_settings = TRUE,
   headless = FALSE,
   # 1.4 Download folder
-  download_capture = FALSE, download_folder = tempdir()
+  download_capture = FALSE, download_folder = "."
 ){
   do.call(
     paste0("rst_remotedriver_specific_config_",browser),

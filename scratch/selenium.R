@@ -1,5 +1,40 @@
 
 
+
+
+
+# all has same wd
+
+# parallel processing
+
+cls <- parallel::makeCluster(parallel::detectCores())
+
+parallel::clusterApply(cls, seq(parallel::detectCores()), function(x) Sys.getpid())
+parallel::clusterApply(cls, seq(parallel::detectCores()), function(x) getwd())
+
+parallel::clusterApply(cls, seq(parallel::detectCores()), function(x) fisher::web_control_client())
+
+
+
+# furrr
+
+future::plan(future::multisession)
+
+
+furrr::future_map_int(1:10, ~Sys.getpid())
+
+furrr::future_map_chr(1:10, ~getwd())
+
+# future::plan(future::sequential)
+
+
+
+
+
+
+
+
+
 # @Dev
 # test of killing existing selenium
 # remDr <- RSelenium::remoteDriver(browserName = "htmlunit", port = 4567L)

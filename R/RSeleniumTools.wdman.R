@@ -47,6 +47,7 @@ rst_wdman_selenium_fill_info_env <- function(spid, pmap, full_control = TRUE){
 rst_wdman_selenium_launcher <- function(
   port = NULL,
   selenium_version = c("dev","stable"),
+  on_exit_cleanup = FALSE,
   webdrivers_offline
 ){
 
@@ -166,6 +167,40 @@ rst_wdman_selenium_launcher <- function(
 
   assign( "s_handle", sel, envir = rst_wdman_selenium_info_env)
   assign( "s_port", sport, envir = rst_wdman_selenium_info_env)
+
+  if(on_exit_cleanup){
+    ws <- wap_config_store()
+    # make first caller initiator
+    prior_pid <- ws$read("wap_rst_selenium_initiator_pid")
+    if(!is.null(prior_pid)){
+      if(!sys_is_pid_active(prior_pid)){
+        # if somehow old pid which is not active is present
+        prior_pid <- NULL
+      }
+    }
+
+    if(is.null(prior_pid)){
+      ws$write("wap_rst_selenium_initiator_pid", Sys.getpid())
+    }
+
+    # stop selenium on exit (or on unload)
+    # if it is initiator process
+    reg.finalizer(
+      asNamespace("fisher"),
+      function(e){
+        ws <- e$wap_config_store()
+        prior_pid <- ws$read("wap_rst_selenium_initiator_pid")
+        # destroy if the calling process is initiator
+        if(isTRUE(prior_pid==Sys.getpid())){
+          try(
+            e$rst_wdman_selenium_info_env$s_handle$process$kill_tree(),
+            silent = TRUE
+          )
+        }
+      },
+      onexit = TRUE
+    )
+  }
 
   invisible(sel)
 
