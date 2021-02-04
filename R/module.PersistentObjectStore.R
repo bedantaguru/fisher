@@ -77,7 +77,9 @@ persistent_object_store <- function(
   handle$file_mode <- d_mode
 
   # write method
-  handle$write <- function(what, value, lst, R_object = FALSE){
+  handle$write <- function(what, value, lst,
+                           R_object = FALSE,
+                           get_file_path_only = FALSE){
 
     if(!missing(lst)){
       what <- names(lst)
@@ -100,6 +102,9 @@ persistent_object_store <- function(
       fn <- file.path(store_dir, "str", what)
     }
 
+    # just return get_file_path
+    if(get_file_path_only) return(fn)
+
     lapply(
       seq_along(fn),
       function(i){
@@ -117,7 +122,12 @@ persistent_object_store <- function(
 
   # read method Note: if what is singleton then result will be singleton in all
   # other cases it will be list
-  handle$read <- function(what, all = FALSE, R_object = FALSE){
+  handle$read <- function(
+    what,
+    all = FALSE,
+    R_object = FALSE,
+    uniform_output = FALSE
+  ){
 
     v <- NULL
 
@@ -143,7 +153,7 @@ persistent_object_store <- function(
     }
 
 
-    if(all | length(fn)>1){
+    if(all | length(fn)>1 | uniform_output){
       v <- lapply(
         seq_along(fn),
         function(i){

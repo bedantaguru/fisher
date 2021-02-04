@@ -19,9 +19,24 @@ parallel::clusterApply(cls, seq(parallel::detectCores()), function(x) fisher::we
 parallel::clusterApply(cls, seq(parallel::detectCores()), function(x){
   rd <- fisher::web_control_client()
   rd$navigate(paste0("https://www.google.com/search?q=",x))
+  c(rd$getCurrentUrl()[[1]],Sys.getpid())
+})
+
+
+parallel::clusterApply(cls, seq(parallel::detectCores()), function(x){
+  source("scratch/R_detached_process_access.R")
+  #if(Sys.getpid()==6628) "this"
 })
 
 paste0("https://www.google.com/search?q=")
+
+parallel::clusterApply(
+  cls,
+  seq(parallel::detectCores()),
+  function(x) {
+    fisher:::sys_find_selenium_pid()
+    c(fisher:::rst_ssm_find_free_session_id(), Sys.getpid())
+  })
 
 parallel::stopCluster(cls)
 
@@ -49,12 +64,13 @@ furrr::future_map_chr(1:10, ~getwd())
 
 # future::plan(future::sequential)
 
+ps <- unlist(parallel::clusterApply(cls, seq(parallel::detectCores()), function(x) Sys.getpid()))
 
+ws <- fisher:::rst_wap_config()
 
+print(ws$rst$get_pid(names(fisher:::rst_ssm_get_active_sessions())))
 
-
-
-
+print(ws$rst$get_sid(ps))
 
 
 # @Dev

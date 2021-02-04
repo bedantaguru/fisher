@@ -30,7 +30,9 @@ wap_config_store <- function(){
       h <- e$persistent_object_store(appname = "wap_config")
       prior_pid <- h$read("wap_initiator_pid")
       # destroy if the calling process is initiator
-      if(isTRUE(prior_pid==Sys.getpid())) h$destroy()
+      # @Dev cleanup option is not so good
+      cat("\nBye bye\n")
+      if(isTRUE(as.integer(prior_pid)==Sys.getpid())) h$destroy()
     },
     onexit = TRUE
   )

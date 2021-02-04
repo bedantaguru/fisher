@@ -23,6 +23,8 @@
 # web_automation_platform_alt_rst for now just using web_automation_platform
 # as there is only one alternative now
 
+rst_wap_env <- new.env()
+
 rst_wap_config <- function(init = FALSE, client_config){
   ws <- wap_config_store()
   if(init){
@@ -50,6 +52,7 @@ rst_wap_config <- function(init = FALSE, client_config){
 
   # add few more functions
   # sid : selenium session id
+
   get_sid <- function(pid){
     ws$read(paste0("rst_pid_",pid))
   }
@@ -66,22 +69,66 @@ rst_wap_config <- function(init = FALSE, client_config){
     ws$write(paste0("rst_sid_",sid), pid)
   }
 
+  # lock mechanism this requires {filelock}
+
+  lock_file_sid <- function(sid){
+    ws$write(paste0("rst_slock_",sid), "", get_file_path_only = TRUE)
+  }
+
+  lock_to_sid <- function(sid){
+    is_locked <- FALSE
+    if(is_available("filelock")){
+      fl <- NULL
+      try({
+        lf <- lock_file_sid(sid)
+        # create it if not present
+        if(!file.exists(lf)) file.create(lf)
+
+        fl <- filelock::lock(lf, timeout = 10)
+
+        if(!is.null(fl)){
+          is_locked <- TRUE
+          # we can keep record of locked sids
+          # rst_wap_env$filelocks[[sid]] <- fl
+          # or we can simply keep a single record so that it is not garbage
+          # collected
+          assign("rst_wap_sid_file_lock", fl, envir = rst_wap_env)
+        }
+
+      }, silent = TRUE)
+    }else{
+      # not a lock at all
+      is_locked <- TRUE
+    }
+    is_locked
+  }
+
   check_pid_sid <- function(pid, sid){
     chk <- TRUE
     psid <- get_sid(pid)
     spid <- get_pid(sid)
-    if(!is.null(psid)){
-      if(psid!=sid) chk <- FALSE
+    # special case of self bind
+    if(pid==Sys.getpid()){
+      chk <- lock_to_sid(sid)
     }
-    if(!is.null(spid)){
+    if(!is.null(spid) & chk){
       if(sys_is_pid_active(spid)){
         if(spid!=pid) chk <- FALSE
+      }
+    }
+    if(!is.null(psid) & chk){
+      if(rst_ssm_is_active(psid)){
+        if(psid!=sid) chk <- FALSE
       }
     }
     chk
   }
 
   bind_pid_sid <- function(pid, sid){
+    # special case of self bind
+    if(pid==Sys.getpid()){
+      lock_to_sid(sid)
+    }
     set_sid(pid, sid)
     set_pid(sid, pid)
   }
@@ -89,6 +136,7 @@ rst_wap_config <- function(init = FALSE, client_config){
   ws$rst <- list(
     check_pid_sid = check_pid_sid,
     bind_pid_sid = bind_pid_sid,
+    lock_to_sid = lock_to_sid,
     get_sid = get_sid,
     set_sid = set_sid,
     get_pid = get_pid,
@@ -112,7 +160,7 @@ web_automation_platform <- function(
   rst_wap_config(init = TRUE, client_config = client_config)
 }
 
-rst_wap_env <- new.env()
+
 
 #' web control client
 #'
@@ -153,12 +201,11 @@ web_control_client <- function(){
   }else{
     # this means old sid can be reused
     rst_ssm_attach_to_active_session(rd, psid)
+    ws$rst$bind_pid_sid(Sys.getpid(), psid)
   }
 
   # save this rd for future use
-  if(!exists("web_control_client_cache",envir = rst_wap_env)){
-    assign("web_control_client_cache", rd, envir = rst_wap_env)
-  }
+  assign("web_control_client_cache", rd, envir = rst_wap_env)
 
   invisible(rd)
 }

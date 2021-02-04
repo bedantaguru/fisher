@@ -191,7 +191,7 @@ rst_wdman_selenium_launcher <- function(
         ws <- e$wap_config_store()
         prior_pid <- ws$read("wap_rst_selenium_initiator_pid")
         # destroy if the calling process is initiator
-        if(isTRUE(prior_pid==Sys.getpid())){
+        if(isTRUE(as.integer(prior_pid)==Sys.getpid())){
           try(
             e$rst_wdman_selenium_info_env$s_handle$process$kill_tree(),
             silent = TRUE
