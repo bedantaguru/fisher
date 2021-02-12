@@ -2,7 +2,7 @@
 #>> Embedded Module: {PersistentObjectStore}
 #>> Author: Indranil Gayen
 #>> Version: 0.0.1
-#>> Files: c("R/module.PersistentObjectStore.R")
+#>> Files: c("R/module_PersistentObjectStore.R")
 
 # Disclaimer: https://cran.r-project.org/web/packages/policies.html
 

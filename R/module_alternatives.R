@@ -4,7 +4,7 @@
 #>> Note: Prototype
 #>> Author: Indranil Gayen
 #>> Version: 0.0.1
-#>> Files: c("R/module.alternatives.R")
+#>> Files: c("R/module_alternatives.R")
 
 
 
