@@ -1,4 +1,9 @@
 
+#>> Embedded Module: {packageAvailabilitySimulate}
+#>> Author: Indranil Gayen
+#>> Version: 0.0.1
+#>> Files: c("R/module_packageAvailabilitySimulate.R")
+
 
 pkg_availability_sim <- new.env()
 
