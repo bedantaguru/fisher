@@ -14,20 +14,23 @@
 # TODO: options to edit R Startup options
 # TODO: history check for last used case (".Rhistory") (on in other module!)
 persistent_object_store <- function(
-  appname = "fisher",
+  # pos : persistent object store
+  appname = "pos",
   authname = "rudra",
-  scope = c("auto","user","project")
+  scope = c("auto","user","project"),
+  # leave this NULL for auto setup
+  store_path = NULL
 ){
 
   scope <- match.arg(scope)
 
   store_dir <- NULL
-  d_mode <- NA
+  d_mode <- ifelse(isTRUE(is.null(store_dir)[1]), NA, "user_specified")
 
   # option 1 running in RStudio (use local file) or someone started a
   # persistent_object_store under RStudio (specifically for non interactive
   # cases)
-  if(scope != "user"){
+  if(is.null(store_dir) & scope != "user"){
     if(interactive()){
       if(exists(".rs.getProjectDirectory")){
         pd <- get(".rs.getProjectDirectory")()
@@ -120,6 +123,7 @@ persistent_object_store <- function(
     invisible(0)
   }
 
+
   # read method Note: if what is singleton then result will be singleton in all
   # other cases it will be list
   handle$read <- function(
@@ -185,19 +189,70 @@ persistent_object_store <- function(
     invisible(v)
   }
 
+  # key exists method
+  handle$key_exists <- function(
+    what,
+    R_object = FALSE){
+
+    if(R_object){
+      fn <- file.path(store_dir, "robj", what)
+    }else{
+      fn <- file.path(store_dir, "str", what)
+    }
+
+    file.exists(fn)
+  }
+
+  # list key method
+  handle$list_key <- function(
+    R_object = FALSE){
+
+    if(R_object){
+      afs <- list.files(file.path(store_dir, "robj"))
+    }else{
+      afs <- list.files(file.path(store_dir, "str"))
+    }
+
+    afs
+  }
+
+  # remove method
+  handle$remove <- function(
+    what,
+    R_object = FALSE){
+
+    if(R_object){
+      fn <- file.path(store_dir, "robj", what)
+    }else{
+      fn <- file.path(store_dir, "str", what)
+    }
+
+    lapply(
+      fn,
+      function(fnn){
+        if(file.exists(fnn)){
+          unlink(fnn, force = TRUE)
+        }
+      }
+    )
+
+    invisible(0)
+
+  }
+
+  # reset method
+  handle$reset <- function(){
+
+    unlink(store_dir, recursive = TRUE, force = TRUE)
+    dir.create(store_dir, showWarnings = FALSE, recursive = TRUE)
+
+  }
+
   # destroy method
   handle$destroy <- function(){
     if(dir.exists(store_dir)){
       unlink(store_dir, recursive = TRUE)
     }
-  }
-
-  # open location but kept mainly for debugging
-  handle$open_location <- function(){
-    if(dir.exists(store_dir)){
-      ifelse(interactive(), isFALSE(utils::browseURL(store_dir)), TRUE)
-    }
-    invisible(0)
   }
 
   invisible(handle)
