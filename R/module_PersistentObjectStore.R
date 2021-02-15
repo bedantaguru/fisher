@@ -204,7 +204,7 @@ persistent_object_store <- function(
   }
 
   # list key method
-  handle$list_key <- function(
+  handle$list_keys <- function(
     R_object = FALSE){
 
     if(R_object){
