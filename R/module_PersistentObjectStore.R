@@ -24,7 +24,7 @@ persistent_object_store <- function(
 
   scope <- match.arg(scope)
 
-  store_dir <- NULL
+  store_dir <- store_path
   d_mode <- ifelse(isTRUE(is.null(store_dir)[1]), NA, "user_specified")
 
   # option 1 running in RStudio (use local file) or someone started a
@@ -84,7 +84,7 @@ persistent_object_store <- function(
                            R_object = FALSE,
                            get_file_path_only = FALSE){
 
-    if(!missing(lst)){
+    if(!missing(lst) & !R_object){
       what <- names(lst)
       value <- unlist(lst)
     }
@@ -96,6 +96,11 @@ persistent_object_store <- function(
       }
 
       fn <- file.path(store_dir, "robj", what)
+
+      if(!is.list(value)){
+        value <- list(value)
+      }
+
     }else{
 
       if(!dir.exists(file.path(store_dir, "str"))){
@@ -113,7 +118,7 @@ persistent_object_store <- function(
       function(i){
         tryCatch({
           if(R_object){
-            saveRDS(value[i], fn[i])
+            saveRDS(value[[i]], fn[i])
           }else{
             writeLines(as.character(value[i]), fn[i])
           }
