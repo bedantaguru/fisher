@@ -59,12 +59,13 @@ sys_all_os_valid_names <- function(with_arch = FALSE){
 # it's like base::UseMethod but for specific OS
 # Proto: https://stackoverflow.com/questions/65287106
 sys_use_os_specific_method <- function(fname){
+  my_pkg_env <- parent.env(environment())
   os <- sys_get_os()
   call_f_name <- paste0(fname, "_", os)
   found <- FALSE
   # call direct method if present
   # if not search of alternative names
-  if(!exists(call_f_name, envir = asNamespace("fisher"))){
+  if(!exists(call_f_name, envir = my_pkg_env)){
     alt_names <- sys_os_alt_names(os)
     alt_names <- setdiff(alt_names, os)
     if(length(alt_names)>0){
@@ -72,7 +73,7 @@ sys_use_os_specific_method <- function(fname){
       call_f_names_chk <-sapply(
         call_f_names,
         exists,
-        envir = asNamespace("fisher")
+        envir = my_pkg_env
       )
       if(any(call_f_names_chk)){
         call_f_name <- call_f_names[which(call_f_names_chk)[1]]
