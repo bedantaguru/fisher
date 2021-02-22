@@ -1,7 +1,7 @@
 
 #>> Embedded Module: {PersistentObjectStore}
 #>> Author: Indranil Gayen
-#>> Version: 0.0.1
+#>> Version: 0.0.2
 #>> Files: c("R/module_PersistentObjectStore.R")
 
 # Disclaimer: https://cran.r-project.org/web/packages/policies.html
@@ -85,6 +85,7 @@ persistent_object_store <- function(
                            get_file_path_only = FALSE){
 
     if(!missing(lst) & !R_object){
+      # string mode (key and values are singleton strings supplied in a list)
       what <- names(lst)
       value <- unlist(lst)
     }
@@ -97,7 +98,8 @@ persistent_object_store <- function(
 
       fn <- file.path(store_dir, "robj", what)
 
-      if(!is.list(value)){
+      if(length(what)==1){
+        # for compatibility with below `lapply`
         value <- list(value)
       }
 
