@@ -9,7 +9,7 @@ rst_wdman_selenium_info_env <- new.env()
 # full_control = TRUE gives kill capabality to selenium (by default it is TRUE)
 rst_wdman_selenium_fill_info_env <- function(spid, pmap, full_control = TRUE){
 
-  try({
+  tryCatch({
 
     if(!missing(pmap)){
 
@@ -39,7 +39,8 @@ rst_wdman_selenium_fill_info_env <- function(spid, pmap, full_control = TRUE){
 
     }
 
-  },silent = TRUE)
+  },
+  error = function(e) NULL)
 
   invisible(0)
 }
@@ -192,9 +193,9 @@ rst_wdman_selenium_launcher <- function(
         prior_pid <- ws$read("wap_rst_selenium_initiator_pid")
         # destroy if the calling process is initiator
         if(isTRUE(as.integer(prior_pid)==Sys.getpid())){
-          try(
+          tryCatch(
             e$rst_wdman_selenium_info_env$s_handle$process$kill_tree(),
-            silent = TRUE
+            error = function(e) NULL
           )
         }
       },

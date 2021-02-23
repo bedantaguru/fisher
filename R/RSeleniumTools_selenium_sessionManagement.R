@@ -82,7 +82,8 @@ rst_ssm_get_active_sessions <- function(
     # close inactive (orphaned or killed manually) sessions
     close_id <- function(id){
       qpath <- sprintf("%s/session/%s", rcenv$serverURL, id)
-      suppressMessages(try(rcenv$queryRD(qpath, "DELETE"), silent = TRUE))
+      suppressMessages(tryCatch(rcenv$queryRD(qpath, "DELETE"),
+                                error = function(e) NULL))
     }
     lapply(all_sessions_id[!all_sessions_chk], close_id)
   }
@@ -99,7 +100,14 @@ rst_ssm_is_active <- function(session_id){
     is_active <- rst_ssm_get_active_sessions(return_test_function = TRUE)
     assign("is_active", is_active,  envir = rst_ssm_quick_access_env)
   }
-  is_active(session_id)
+  chk <- is_active(session_id)
+  if(!chk){
+    # Check and close inactive sessions
+    rst_ssm_get_active_sessions(
+      close_inactive_sessions = TRUE,
+      no_check = FALSE)
+  }
+  chk
 }
 
 rst_ssm_attach_to_active_session <- function(client, session_id){

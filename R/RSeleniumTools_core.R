@@ -79,7 +79,7 @@ rst_wap_config <- function(init = FALSE, client_config){
     is_locked <- FALSE
     if(is_available("filelock")){
       fl <- NULL
-      try({
+      tryCatch({
         lf <- lock_file_sid(sid)
         # create it if not present
         if(!file.exists(lf)) file.create(lf)
@@ -95,7 +95,7 @@ rst_wap_config <- function(init = FALSE, client_config){
           assign("rst_wap_sid_file_lock", fl, envir = rst_wap_env)
         }
 
-      }, silent = TRUE)
+      }, error = function(e) NULL)
     }else{
       # not a lock at all
       is_locked <- TRUE
@@ -105,22 +105,39 @@ rst_wap_config <- function(init = FALSE, client_config){
 
   check_pid_sid <- function(pid, sid){
     chk <- TRUE
+
     psid <- get_sid(pid)
     spid <- get_pid(sid)
+
     # special case of self bind
     if(pid==Sys.getpid()){
+      # check if the target sid can be locked
       chk <- lock_to_sid(sid)
     }
+
     if(!is.null(spid) & chk){
+      # check if pid previously bind to sid is active or not
       if(sys_is_pid_active(spid)){
+        # if active and not equal to current pid don't bind
+        # this means it (sid) is already used by spid
         if(spid!=pid) chk <- FALSE
       }
     }
+
+    if(chk & !is.null(sid)){
+      # check if target sid is active
+      chk <- rst_ssm_is_active(sid)
+    }
+
     if(!is.null(psid) & chk){
+      # check if sid previously bind to pid is active or not
       if(rst_ssm_is_active(psid)){
+        # if it is active that means only that sid is bind-able to this pid
         if(psid!=sid) chk <- FALSE
       }
     }
+
+
     chk
   }
 
@@ -171,7 +188,9 @@ web_control_client <- function(){
 
   if(exists("web_control_client_cache",envir = rst_wap_env)){
     rd <- rst_wap_env$web_control_client_cache
-    return(invisible(rd))
+    if(rst_remotedriver_check(rd)){
+      return(invisible(rd))
+    }
   }
 
   # link selenium instance if possible

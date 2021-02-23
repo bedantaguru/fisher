@@ -233,11 +233,11 @@ wap_browser_config_reader_firefox <- function(file_path){
   # fallback option
   lo <- list()
 
-  try({
+  tryCatch({
     source(exprs = parse(text = ffls), local = senv)
 
     lo <- senv$lo
-  }, silent = TRUE)
+  }, error = function(e) NULL)
 
   lo
 

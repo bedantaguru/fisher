@@ -119,13 +119,13 @@ sys_cmd <- function(cmd, ...){
 
 sys_ps_kill_tree <- function(psh){
   if(is_available("ps")){
-    try({
+    tryCatch({
       if(ps::ps_is_running(psh)){
         pshc <- ps::ps_children(psh, recursive = TRUE)
 
         lapply(rev(pshc), ps::ps_kill)
         ps::ps_kill(psh)
       }
-    }, silent = TRUE)
+    }, error = function(e) NULL)
   }
 }

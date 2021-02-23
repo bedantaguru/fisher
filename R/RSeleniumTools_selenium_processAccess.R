@@ -41,7 +41,8 @@ rst_selenium_process_access <- function(){
 
     lo$kill_browser_driver <- function(browsers = "all"){
       if("all" %in% browsers) browsers <- c("chrome", "firefox","opera", "edge")
-      try(kill_browser_driver_raw(browsers), silent = TRUE)
+      tryCatch(kill_browser_driver_raw(browsers),
+               error = function(e) NULL)
       return(invisible(0))
     }
 

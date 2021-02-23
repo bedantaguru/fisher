@@ -32,6 +32,7 @@ wap_config_store <- function(){
       # destroy if the calling process is initiator
       # @Dev cleanup option is not so good
       cat("\nBye bye\n")
+      cat(isTRUE(as.integer(prior_pid)==Sys.getpid()))
       if(isTRUE(as.integer(prior_pid)==Sys.getpid())) h$destroy()
     },
     onexit = TRUE

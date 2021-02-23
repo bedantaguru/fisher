@@ -132,3 +132,38 @@ rst_remotedriver <- function(
     ...)
 
 }
+
+
+
+rst_remotedriver_check <- function(rd){
+  # # detailed
+  # msg <- utils::capture.output(
+  #   tryCatch(rd$getPageSource(), error = function(e) {
+  #     tryCatch(rd$errorDetails()$message, error = function(e) "")
+  #   }), type = "message")
+
+  chk <- TRUE
+
+  msg <- utils::capture.output({
+    chk <- tryCatch({
+      ch <- rd$getPageSource()
+      ch <- unlist(ch)
+      is.character(ch)
+    }, error = function(e) {
+      FALSE
+    })
+  }, type = "message")
+
+  chk2 <- any(grepl("not reachable", tolower(msg)))
+
+  if(!is.logical(chk)){
+    chk <- !chk2
+  }
+
+  if(length(chk)!=1){
+    chk <- !chk2
+  }
+
+  chk
+
+}

@@ -201,7 +201,7 @@ wap_browser_config_implementer_opera <- function(
 
       dir.create(tpf, showWarnings = FALSE)
       tpfp <- file.path(tpf, "Preferences")
-      try({
+      tryCatch({
         if(read_back_config){
           prior_cnf <- jsonlite::fromJSON(tpfp)
           conf_lst <- merge_list(prior_cnf, conf_lst)
@@ -212,7 +212,7 @@ wap_browser_config_implementer_opera <- function(
             args = list(paste0('--user-data-dir=',normalizePath(tpf),'')))
         )
 
-      }, silent = TRUE)
+      }, error = function(e) NULL)
     }
 
 

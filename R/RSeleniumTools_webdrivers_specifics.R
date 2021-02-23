@@ -326,7 +326,7 @@ rst_webdriver_specific_selenium <- function(sver = "both", offline_info = NULL){
     stablev <- numeric_version("3.141.59")
 
     if(!do_offline){
-      try({
+      tryCatch({
         # try to update
         wc <- readLines("https://www.selenium.dev/downloads/", warn = FALSE)
         wc <- tolower(wc)
@@ -341,7 +341,8 @@ rst_webdriver_specific_selenium <- function(sver = "both", offline_info = NULL){
                 "</a>")[[1]][1],
               ">")[[1]][2]
           )
-      }, silent = TRUE)
+      },
+      error = function(e) NULL)
     }
 
     driver_web_info$core$for_this_browser <-

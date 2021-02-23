@@ -59,7 +59,7 @@ sys_is_port_free <- function(port, pmap){
     if(isTRUE(sc)){
       pok <- TRUE
     }else{
-      try(close(sc), silent = TRUE)
+      tryCatch(close(sc), error = function(e) NULL)
     }
 
   }else{
@@ -87,7 +87,7 @@ sys_get_a_port <- function(
       sample(seq(port_range[1], port_range[2]), size = 1))
   }
 
-  pmap <- try(sys_get_pid_port_map(), silent = TRUE)
+  pmap <- tryCatch(sys_get_pid_port_map(), error = function(e) NULL)
 
   if(!is.data.frame(pmap)) pmap <- NULL
 
@@ -107,7 +107,7 @@ sys_get_a_port <- function(
         # try to kill it
         # {ps} is required for this
         if(is_available("ps") & !is.null(pmap)){
-          try({
+          tryCatch({
             early_pid <- pmap$pid[pmap$port==this_port]
             ph <- ps::ps_handle(as.integer(early_pid)[1])
             # simple kill ps::ps_kill(ph)
@@ -120,7 +120,7 @@ sys_get_a_port <- function(
               get_fresh <- FALSE
             }
 
-          }, silent = TRUE)
+          }, error = function(e) NULL)
 
         }
       }

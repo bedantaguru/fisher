@@ -14,7 +14,8 @@ is_url_exists <- function(url = "https://www.google.com/"){
 is_internet_active <- function(){
   c1 <- FALSE
   if(is_available("curl")){
-    c1 <- try(curl::has_internet(), silent = TRUE)
+    c1 <- tryCatch(curl::has_internet(),
+              error = function(e) NULL)
   }
 
   if(!isTRUE(c1)){
