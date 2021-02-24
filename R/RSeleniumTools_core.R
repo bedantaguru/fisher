@@ -215,7 +215,7 @@ web_control_client <- function(){
   rd <- do.call("rst_remotedriver", args = shared_config)
   if(is.null(psid)){
     # this means fresh sid need to be generated
-    info <- rd$open(silent = FALSE)
+    info <- rd$open(silent = TRUE)
     ws$rst$bind_pid_sid(Sys.getpid(), info$id)
   }else{
     # this means old sid can be reused
