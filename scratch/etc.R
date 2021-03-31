@@ -2,6 +2,7 @@
 
 fn0 <- function(x){
   if(!missing(x)){
+    "here"
     x <- match.arg(x, choices = c("test","indra","nakshatra"))
     return(x)
   }
