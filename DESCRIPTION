@@ -1,6 +1,6 @@
 Package: fisher
 Title: A robotic fisher in making
-Version: 0.0.0.90
+Version: 0.0.0.900
 Authors@R: 
      person(given = "Indranil",
            family = "Gayen",
