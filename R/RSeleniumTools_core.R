@@ -97,6 +97,9 @@ rst_wap_config <- function(init = FALSE, client_config){
 
       }, error = function(e) NULL)
     }else{
+      message(
+        "{filelock} is required for proper functioning of session management"
+      )
       # not a lock at all
       is_locked <- TRUE
     }
@@ -171,9 +174,10 @@ rst_wap_config <- function(init = FALSE, client_config){
 #'
 #' @export
 web_automation_platform <- function(
-  client_config = rst_remotedriver(get_config_list_only = TRUE)
+  client_config = rst_remotedriver(get_config_list_only = TRUE),
+  ...
 ){
-  rst_wdman_selenium_launcher(on_exit_cleanup = TRUE)
+  rst_wdman_selenium_launcher(on_exit_cleanup = TRUE, ...)
   rst_wap_config(init = TRUE, client_config = client_config)
 }
 

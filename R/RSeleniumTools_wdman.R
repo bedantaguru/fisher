@@ -49,6 +49,25 @@ rst_wdman_selenium_launcher <- function(
   port = NULL,
   selenium_version = c("dev","stable"),
   on_exit_cleanup = FALSE,
+  # -browserTimeout
+  # <Integer> in seconds : number of seconds a browser session is allowed to
+  # hang while a WebDriver command is running (example: driver.get(url)). If
+  # the timeout is reached while a WebDriver command is still processing,
+  # the session will quit. Minimum value is 60. An unspecified, zero, or
+  # negative value means wait indefinitely. If a node does not specify it,
+  # the hub value will be used.
+  browserTimeout = 300L,
+  # -timeout, -sessionTimeout
+  # <Integer> in seconds : Specifies the timeout before the server
+  # automatically kills a session that hasn't had any activity in the last X
+  # seconds. The test slot will then be released for another test to use.
+  # This is typically used to take care of client crashes. For grid hub/node
+  # roles, cleanUpCycle must also be set. If a node does not specify it, the
+  # hub value will be used.
+  #
+  # ref : https://stackoverflow.com/questions/55438913/is-there-a-way-too-prevent-selenium-automatically-terminating-idle-sessions
+  sessionTimeout = 57868143L,
+
   webdrivers_offline
 ){
 
@@ -87,6 +106,16 @@ rst_wdman_selenium_launcher <- function(
     sver <- max(sver)
 
   }
+
+  # selenium specific
+
+  selargs_lst <- list()
+
+  selargs_lst$browserTimeout <- paste0("-browserTimeout ",
+                                       as.integer(browserTimeout))
+
+  selargs_lst$sessionTimeout  <- paste0("-sessionTimeout  ",
+                                        as.integer(sessionTimeout ))
 
   # chrome
   cver <- NULL
@@ -128,7 +157,6 @@ rst_wdman_selenium_launcher <- function(
     )
   }
 
-
   # kill previous instance
   if(exists("s_handle",envir = rst_wdman_selenium_info_env)){
     rst_wdman_selenium_info_env$s_handle$process$kill_tree()
@@ -159,6 +187,9 @@ rst_wdman_selenium_launcher <- function(
 
     # rest (opera and edge managed by {fisher})
     jvmargs = extra_jvmargs_lst,
+
+    # selenium args
+    selargs = selargs_lst,
 
     # disabling phantom and ie
     phantomver = NULL, iedrver = NULL,
