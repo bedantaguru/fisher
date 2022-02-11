@@ -178,6 +178,17 @@ web_automation_platform <- function(
   ...
 ){
   rst_wdman_selenium_launcher(on_exit_cleanup = TRUE, ...)
+
+  # rst specific
+  # check for outdated versions
+  out_chk <- tryCatch(
+    rst_webdriver_info(),
+    error = function(e) list(online="did not run"))
+
+  if(!is.null(out_chk$online)){
+    warning("Possibly the browser versions updated / driver versions got outdated / some unknown error occurred. ")
+  }
+
   rst_wap_config(init = TRUE, client_config = client_config)
 }
 
