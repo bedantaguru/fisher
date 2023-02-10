@@ -20,3 +20,4 @@
 #TODO many works may be required here
 # main issue RSelenium is not working as of now with selenium 4.8
 # need to add flag standalone in command
+# https://www.lambdatest.com/blog/selenium-standalone-server-and-selenium-server/
