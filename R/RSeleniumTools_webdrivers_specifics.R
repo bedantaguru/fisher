@@ -279,6 +279,8 @@ rst_webdriver_specific_opera <- function(over, offline_info = NULL){
 # technically it is not webdriver (it is selenium itself)
 # sver can be stable, dev, both
 rst_webdriver_specific_selenium <- function(sver = "both", offline_info = NULL){
+  #  this is full obsolete
+  #TODO fix it for Selenium 4.8
 
   sver <- match.arg(sver, choices = c("both","dev","stable"))
 
@@ -326,6 +328,8 @@ rst_webdriver_specific_selenium <- function(sver = "both", offline_info = NULL){
     stablev <- numeric_version("3.141.59")
 
     if(!do_offline){
+      # very very bad approach need to clean up
+      #TODO
       tryCatch({
         # try to update
         wc <- readLines("https://www.selenium.dev/downloads/", warn = FALSE)
@@ -386,6 +390,51 @@ rst_webdriver_specific_selenium <- function(sver = "both", offline_info = NULL){
     driver_web_info$core$remarks <- "dev"
   }
 
+
+  rst_webdriver_specific_finalizer(driver_web_info, info)
+
+
+}
+
+#@Dev
+#TODO
+# new development for selenium 4.8
+rst_webdriver_specific_selenium_2023 <- function(sver = "new", offline_info = NULL){
+
+
+  info <- list(
+    driver_url =
+      "https://api.github.com/repos/SeleniumHQ/selenium/releases",
+    compatibility =
+      "https://www.selenium.dev/"
+  )
+
+  do_offline <- FALSE
+  #TODO
+
+  if(do_offline){
+    stop("TODO")
+    #driver_web_info <- rst_webdriver_url_parser(offline_info, offline = TRUE)
+  }else{
+    driver_web_info <- rst_webdriver_url_parser(info$driver_url)
+  }
+
+  driver_web_info$core <- driver_web_info$core[
+    driver_web_info$core$appname == "selenium",
+  ]
+
+  driver_web_info$core$appname_based_on_filename <-
+    sub("-[0-9alphabetarc.-]+.jar$","",driver_web_info$core$file)
+
+  driver_web_info$core <- driver_web_info$core[
+    driver_web_info$core$appname_based_on_filename == "selenium-server",
+  ]
+  # early exit
+  if(nrow(driver_web_info$core)==0) return(NULL)
+
+  # pick the latest
+  driver_web_info$core$for_this_browser <-
+    driver_web_info$core$time_idx==max(driver_web_info$core$time_idx)
 
   rst_webdriver_specific_finalizer(driver_web_info, info)
 

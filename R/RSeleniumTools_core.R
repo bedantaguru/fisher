@@ -197,11 +197,11 @@ web_automation_platform <- function(
 #' web control client
 #'
 #' @export
-web_control_client <- function(){
+web_control_client <- function(browser, force_new = FALSE){
 
   # check prior saved client
 
-  if(exists("web_control_client_cache",envir = rst_wap_env)){
+  if(exists("web_control_client_cache",envir = rst_wap_env) & !force_new){
     rd <- rst_wap_env$web_control_client_cache
     if(rst_remotedriver_check(rd)){
       return(invisible(rd))
@@ -226,6 +226,13 @@ web_control_client <- function(){
 
   shared_config <- ws$read("wap_rst_client_config", R_object = TRUE)
   if(is.null(shared_config)) shared_config <- list()
+
+  if(!missing(browser)){
+    # this is required to be developed as expected
+    #@Dev
+    #TODO
+    shared_config$browser <- browser
+  }
 
   rd <- do.call("rst_remotedriver", args = shared_config)
   if(is.null(psid)){

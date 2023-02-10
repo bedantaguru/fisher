@@ -46,29 +46,29 @@ rst_wdman_selenium_fill_info_env <- function(spid, pmap, full_control = TRUE){
 }
 
 rst_wdman_selenium_launcher <- function(
-  port = NULL,
-  selenium_version = c("dev","stable"),
-  on_exit_cleanup = FALSE,
-  # -browserTimeout
-  # <Integer> in seconds : number of seconds a browser session is allowed to
-  # hang while a WebDriver command is running (example: driver.get(url)). If
-  # the timeout is reached while a WebDriver command is still processing,
-  # the session will quit. Minimum value is 60. An unspecified, zero, or
-  # negative value means wait indefinitely. If a node does not specify it,
-  # the hub value will be used.
-  browserTimeout = 300L,
-  # -timeout, -sessionTimeout
-  # <Integer> in seconds : Specifies the timeout before the server
-  # automatically kills a session that hasn't had any activity in the last X
-  # seconds. The test slot will then be released for another test to use.
-  # This is typically used to take care of client crashes. For grid hub/node
-  # roles, cleanUpCycle must also be set. If a node does not specify it, the
-  # hub value will be used.
-  #
-  # ref : https://stackoverflow.com/questions/55438913/is-there-a-way-too-prevent-selenium-automatically-terminating-idle-sessions
-  sessionTimeout = 57868143L,
+    port = NULL,
+    selenium_version = c("dev","stable"),
+    on_exit_cleanup = FALSE,
+    # -browserTimeout
+    # <Integer> in seconds : number of seconds a browser session is allowed to
+    # hang while a WebDriver command is running (example: driver.get(url)). If
+    # the timeout is reached while a WebDriver command is still processing,
+    # the session will quit. Minimum value is 60. An unspecified, zero, or
+    # negative value means wait indefinitely. If a node does not specify it,
+    # the hub value will be used.
+    browserTimeout = 300L,
+    # -timeout, -sessionTimeout
+    # <Integer> in seconds : Specifies the timeout before the server
+    # automatically kills a session that hasn't had any activity in the last X
+    # seconds. The test slot will then be released for another test to use.
+    # This is typically used to take care of client crashes. For grid hub/node
+    # roles, cleanUpCycle must also be set. If a node does not specify it, the
+    # hub value will be used.
+    #
+    # ref : https://stackoverflow.com/questions/55438913/is-there-a-way-too-prevent-selenium-automatically-terminating-idle-sessions
+    sessionTimeout = 57868143L,
 
-  webdrivers_offline
+    webdrivers_offline
 ){
 
   selenium_version <- match.arg(selenium_version)
@@ -117,23 +117,42 @@ rst_wdman_selenium_launcher <- function(
   selargs_lst$sessionTimeout  <- paste0("-sessionTimeout  ",
                                         as.integer(sessionTimeout ))
 
+  # this is required for fix in "wdman and LICENSE.chromedriver issue"
+  bypass_wdman_detection <- TRUE
+  extra_jvmargs_lst <- list()
+
   # chrome
   cver <- NULL
   if("chromedriver" %in% webdrivers_offline$appname){
-    cver <- webdrivers_offline$version[
-      webdrivers_offline$appname=="chromedriver"
-    ]
+    if(bypass_wdman_detection){
+      cexe <- webdrivers_offline$bin_file[
+        webdrivers_offline$appname=="chromedriver"
+      ]
+      extra_jvmargs_lst$chrome <- paste0(
+        "-Dwebdriver.chrome.driver=",
+        paste0('"',cexe,'"')
+      )
+    }else{
+      cver <- webdrivers_offline$version[
+        webdrivers_offline$appname=="chromedriver"
+      ]
+    }
   }
 
   # gecko (firefox)
   gver <- NULL
   if("geckodriver" %in% webdrivers_offline$appname){
-    gver <- webdrivers_offline$version[
-      webdrivers_offline$appname=="geckodriver"
-    ]
+    if(bypass_wdman_detection){
+
+      stop("To Develop")
+
+    }else{
+      gver <- webdrivers_offline$version[
+        webdrivers_offline$appname=="geckodriver"
+      ]
+    }
   }
 
-  extra_jvmargs_lst <- list()
 
   # opera
   if("operadriver" %in% webdrivers_offline$appname){

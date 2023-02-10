@@ -5,7 +5,8 @@
 \title{web automation platform}
 \usage{
 web_automation_platform(
-  client_config = rst_remotedriver(get_config_list_only = TRUE)
+  client_config = rst_remotedriver(get_config_list_only = TRUE),
+  ...
 )
 }
 \arguments{
