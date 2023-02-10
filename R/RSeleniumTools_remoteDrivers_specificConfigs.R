@@ -46,10 +46,11 @@ rst_remotedriver_specific_config_chromium <- function(
     # proxy is set at argument level
     # Ref
     # https://www.chromium.org/developers/design-documents/network-settings
-    pl  <- wap_browser_config_implementer(browser = chromium_browser,
-                                          arg_lst = list(
-                                            paste0('--proxy-server=',proxy_host,':', proxy_port)
-                                          ))
+    pl  <- wap_browser_config_implementer(
+      browser = chromium_browser,
+      arg_lst = list(
+        paste0('--proxy-server=',proxy_host,':', proxy_port)
+      ))
 
     cnf <- merge_list(cnf, pl)
   }
@@ -277,7 +278,7 @@ rst_remotedriver_specific_config_firefox <- function(
 
   if(no_credential_store_offer){
 
-   warning("Not implemented yet")
+    warning("Not implemented yet")
 
   }
 
