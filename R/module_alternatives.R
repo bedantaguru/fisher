@@ -11,17 +11,41 @@
 
 alternatives <- function(method_name,
                          use,
-                         install) {
+                         install,
+                         refresh) {
 
 
   if (missing(method_name)) {
     method_name <- alternatives_get_method_name()
   }else{
-    method_name <- deparse(substitute(method_name))
+    if(!is.character(method_name)){
+      method_name <- deparse(substitute(method_name))
+    }
+  }
+
+  # detect direct call or invoke call
+  is_direct_call <- FALSE
+  sc <- sys.calls()
+
+  if(length(sc) == 1){
+    is_direct_call <- TRUE
+  }else{
+    just_above <- deparse(sc[length(sc)-1][[1]][[1]])
+    if(just_above==method_name){
+      is_direct_call <- FALSE
+    }else{
+      is_direct_call <- TRUE
+    }
+  }
+
+  if(is_direct_call){
+    upper_env <- sys.frame(sys.parent())
+  }else{
+    upper_env <- parent.env(sys.frame(sys.parent()))
   }
 
   search_info <- tryCatch(
-    alternatives_search(method_name),
+    alternatives_search(method_name, upper_env),
     error = function(e){
       stop("Alternatives search error..", call. = FALSE)
     }
@@ -31,6 +55,14 @@ alternatives <- function(method_name,
     stop("No alternatives found..", call. = FALSE)
   }
 
+  if(is_direct_call){
+    if(!missing(refresh)){
+      if(refresh){
+        alternatives_availability_info_cache(search_info$results, reset = TRUE)
+      }
+    }
+  }
+
   availability_info <- tryCatch(
     alternatives_check_availability(search_info),
     error = function(e){
@@ -38,7 +70,9 @@ alternatives <- function(method_name,
     }
   )
 
-  if(length(sys.calls()) == 1){
+
+
+  if(is_direct_call){
     # direct alternatives call to know alternatives and do operation on it
     # not further processing
     return(alternatives_settings(search_info, availability_info, use, install))
@@ -178,16 +212,21 @@ alternatives_dispatch_style_naming <- function(method_name) {
   )
 }
 
-alternatives_search <- function(method_name) {
+alternatives_search <- function(method_name, upper_env) {
   # we can get package name from : methods::getPackageName(create = FALSE)
   # .packageName may not be reliable
   # Or simply we may not need the package name (yet)
   search_space <- list()
+
   # 1. current package
   search_space$native <- parent.env(environment())
-  # 2. Global Environment
+  # 2. local environement (only if not ran from global env)
+  if(!identical(upper_env, globalenv())){
+    search_space$local <- upper_env
+  }
+  # 3. Global Environment
   search_space$global <- globalenv()
-  # 3. attached pkgs if any
+  # 4. attached pkgs if any
   if(!is.null(alternatives_env$extra_pkgs)){
     for(pn in alternatives_env$extra_pkgs){
       search_space[[pn]] <- asNamespace(pn)
@@ -336,10 +375,18 @@ alternatives_check_availability <- function(search_info, fresh = FALSE){
 
 }
 
-alternatives_availability_info_cache <- function(availability_info){
-  alternatives_env$availability_info_cache[[
-    availability_info$method_name[1]
-  ]] <- availability_info
+alternatives_availability_info_cache <- function(
+    availability_info,
+    reset = FALSE){
+  if(reset){
+    alternatives_env$availability_info_cache[[
+      availability_info$method_name[1]
+    ]] <- NULL
+  }else{
+    alternatives_env$availability_info_cache[[
+      availability_info$method_name[1]
+    ]] <- availability_info
+  }
 }
 
 # kept for compatibility and shallow dependency on {packageAvailabilitySimulate}

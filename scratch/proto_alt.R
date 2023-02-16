@@ -90,47 +90,47 @@ g <- function(){
 
 
 
-xyz <- function(x){
-  alternatives()
+f_inside <- function(){
+  xyz <- function(x){
+    alternatives()
+  }
+
+
+  xyz_alt_alt1 <- function(x){
+    cat(x)
+    "Alt1"
+  }
+
+  xyz_alt_alt2 <- function(x){
+    cat(x)
+    "Alt2"
+  }
+
+  xyz_altMeta_alt1 <- function(){
+    list(
+      system = list(
+        abc = function() {
+          cat("abc\n")
+          TRUE
+        },
+        abc2 = function(){
+          cat("abc2\n")
+          TRUE
+        }
+      ))
+  }
+
+
+  xyz_altMeta_alt2 <- function(){
+    cat("pkgs inst\n")
+    list(
+      packages = "methods"
+    )
+  }
+
+
+  xyz("Hi")
 }
-
-
-xyz_alt_alt1 <- function(x){
-  cat(x)
-  "Alt1"
-}
-
-xyz_alt_alt2 <- function(x){
-  cat(x)
-  "Alt2"
-}
-
-xyz_altMeta_alt1 <- function(){
-  list(
-    system = list(
-      abc = function() {
-        cat("hello\n")
-        TRUE
-      },
-      abc2 = function(){
-        cat("hi\n")
-        TRUE
-      }
-    ))
-}
-
-
-xyz_altMeta_alt2 <- function(){
-  cat("here too\n")
-  list(
-    packages = "A3"
-  )
-}
-
-
-
-
-
 
 
 
