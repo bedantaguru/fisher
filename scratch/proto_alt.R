@@ -14,6 +14,7 @@
 
 # either this
 filter <- function(...){
+  cat("hi")
   alternatives("filter")
 }
 
@@ -21,9 +22,9 @@ filter <- function(...){
 # xyz <- filter alternatives will be detected for xyz instead of filter.
 # this is inferred from sys.calls. Not a recommended way. Kept for
 # experimentation
-filter <- function(...){
-  alternatives()
-}
+# filter <- function(...){
+#   alternatives()
+# }
 
 # style method_name then _alt_ then alternative name / implementation
 filter_alt_stats <- function(...){
@@ -57,7 +58,7 @@ filter_altMeta_dplyr <- function(){
     packages = c("dplyr"),
     system = list(
       xyz = function() TRUE,
-      abc = function() "Please do this to install <abc>",
+      abc = function() cat("Please do this to install <abc>"),
       rst = function() FALSE
     )
   )
@@ -81,7 +82,7 @@ g <- function(){
   ff(r$jh)
 }
 
-g()
+# g()
 
 #####################################
 # 2
@@ -89,6 +90,42 @@ g()
 
 
 
+xyz <- function(x){
+  alternatives()
+}
+
+
+xyz_alt_alt1 <- function(x){
+  cat(x)
+  "Alt1"
+}
+
+xyz_alt_alt2 <- function(x){
+  cat(x)
+  "Alt2"
+}
+
+xyz_altMeta_alt1 <- function(){
+  list(
+    system = list(
+      abc = function() {
+        cat("hello\n")
+        TRUE
+      },
+      abc2 = function(){
+        cat("hi\n")
+        TRUE
+      }
+    ))
+}
+
+
+xyz_altMeta_alt2 <- function(){
+  cat("here too\n")
+  list(
+    packages = "A3"
+  )
+}
 
 
 
@@ -99,14 +136,9 @@ g()
 
 
 
-
-
-
-
-
-f <- function(e) dir.create("Clean", showWarnings = F)
-g <- function(x){ e <- asNamespace("fisher"); reg.finalizer(e, f, onexit = T) }
-g()
-invisible(gc()) # trigger cleanup
+# f <- function(e) dir.create("Clean", showWarnings = F)
+# g <- function(x){ e <- asNamespace("fisher"); reg.finalizer(e, f, onexit = T) }
+# g()
+# invisible(gc()) # trigger cleanup
 
 
