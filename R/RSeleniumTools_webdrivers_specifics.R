@@ -23,7 +23,7 @@ rst_webdriver_specific_finalizer <- function(driver_web_info, info){
     ), call. = FALSE)
   }
 
-   # add remark column if not present
+  # add remark column if not present
   if(is.null(driver_web_info$core$remarks)){
     driver_web_info$core$remarks <- ""
   }
@@ -47,6 +47,28 @@ rst_webdriver_specific_finalizer <- function(driver_web_info, info){
   if(nrow(this_d)>1){
     this_d <- this_d[1,]
   }
+
+  # only these columns will be present
+
+  # all these may not be required
+  # this_d <- this_d[
+  #   c("time_idx", "appname", "appname_from_url", "version", "is_zip",
+  #     "is_jar", "platform_tag", "is_valid_platform", "file", "url",
+  #     "file_integrity", "file_integrity_algo", "version_num", "for_this_platform",
+  #     "for_this_platform_belowbit", "for_this_browser", "for_this_system",
+  #     "remarks", "this_one")
+  # ]
+
+  this_d <- this_d[
+    c("appname",
+      "version",
+      "platform_tag",
+      "file",
+      "url",
+      "file_integrity",
+      "file_integrity_algo",
+      "remarks")
+  ]
 
   list(this_driver_info = this_d,
        info = info,
@@ -278,11 +300,183 @@ rst_webdriver_specific_opera <- function(over, offline_info = NULL){
 
 # technically it is not webdriver (it is selenium itself)
 # sver can be stable, dev, both
-rst_webdriver_specific_selenium <- function(sver = "both", offline_info = NULL){
-  #  this is full obsolete
+rst_webdriver_specific_selenium <- function(sver = "all", offline_info = NULL){
+
+  info <- list()
+
   #TODO fix it for Selenium 4.8
 
-  sver <- match.arg(sver, choices = c("both","dev","stable"))
+  # ref : https://testsigma.com/blog/selenium-standalone-server/
+  sver <- match.arg(sver, choices = c(
+    # all will not be explicitly called but in first go /subsequently it is
+    # required for downloading
+    "all", # all means all 3 variants
+    # standalone server not present
+    "4.x+", # or "latest"
+    # standalone server
+    "4.x_dev","3.x"))
+
+
+  do_offline_4.x <- FALSE
+  do_offline_3.x <- FALSE
+
+  if(is.data.frame(offline_info)){
+    if(nrow(offline_info)>0){
+      offline_info <- offline_info[
+        grepl("selenium", tolower(offline_info$app)),]
+
+      # check again
+      if(nrow(offline_info)>0){
+        offline_info$is_dev <- grepl("alpha|beta", offline_info$version)
+        offline_info$version_parse <-
+          package_version(gsub("[^0-9\\.]","",offline_info$version))
+
+        offline_info$version_tag <- paste0(
+          offline_info$version_parse$major,
+          ".x",
+          ifelse(offline_info$is_dev, "_dev","")
+        )
+
+        offline_info$version_tag[
+          offline_info$version_parse$major>=4 &
+            !offline_info$is_dev
+        ] <- "4.x+"
+
+        if(sver == "all"){
+          var_tags <- c("4.x+","4.x_dev","3.x")
+        }else{
+          var_tags <- sver
+        }
+
+        rem_tags <- setdiff(var_tags, offline_info$version_tag)
+
+        if("4.x+" %in% rem_tags){
+          do_offline_4.x <- FALSE
+        }else{
+          # offline is sufficient
+          do_offline_4.x <- TRUE
+          info$offline <- TRUE
+        }
+
+        if(("4.x_dev" %in% rem_tags) | ("3.x" %in% rem_tags)){
+          do_offline_3.x <- FALSE
+        }else{
+          do_offline_3.x <- TRUE
+          info$offline <- TRUE
+        }
+
+      }
+    }
+  }
+
+
+  driver_web_info_List_4.x <- list()
+
+  # merge info from 4.x source (different source)
+  if(sver=="all" | sver == "4.x+" ){
+    if(do_offline_4.x){
+      driver_web_info_List_4.x <- rst_webdriver_specific_selenium_4.x(
+        offline_info = offline_info)
+    }else{
+      driver_web_info_List_4.x <- rst_webdriver_specific_selenium_4.x()
+    }
+  }
+
+
+  # merge info from 3.x source (different source)
+  driver_web_info_List_3.x <- list()
+  if(sver=="all" | sver == "3.x" | sver =="4.x_dev"){
+    if(do_offline_3.x){
+      driver_web_info_List_3.x <- rst_webdriver_specific_selenium_3.x(
+        offline_info = offline_info)
+    }else{
+      driver_web_info_List_3.x <- rst_webdriver_specific_selenium_3.x()
+    }
+  }
+
+  # return only 4.x+
+  if(sver == "4.x+"){
+    driver_web_info_List_4.x$driver_web_info$core$for_this_browser <- TRUE
+    return(
+      rst_webdriver_specific_finalizer(
+        driver_web_info_List_4.x$driver_web_info,
+        driver_web_info_List_4.x$info
+      )
+    )
+  }
+
+  # return for 3.x or 4.x_dev
+  if(sver == "3.x" | sver =="4.x_dev"){
+    # driver_web_info_List_3.x$driver_web_info$core$for_this_browser <- FALSE
+    driver_web_info_List_3.x$driver_web_info$core$for_this_browser <-
+      driver_web_info_List_3.x$driver_web_info$core$version_tag == sver
+
+    return(
+      rst_webdriver_specific_finalizer(
+        driver_web_info_List_3.x$driver_web_info,
+        driver_web_info_List_3.x$info
+      )
+    )
+  }
+
+
+
+  # case for sver == all
+
+  commn_cnames <- intersect(
+    colnames(driver_web_info_List_3.x$driver_web_info$core),
+    colnames(driver_web_info_List_4.x$driver_web_info$core)
+  )
+
+  driver_web_info_merged <- rbind(
+    driver_web_info_List_3.x$driver_web_info$core[commn_cnames],
+    driver_web_info_List_4.x$driver_web_info$core[commn_cnames]
+  )
+
+  driver_web_info_merged$for_this_browser <- TRUE
+
+  # filtering out 2.x and older (if any)
+
+  driver_web_info_merged <- driver_web_info_merged[
+    driver_web_info_merged$version_tag %in% c("3.x", "4.x_dev", "4.x+"),]
+
+  # latest info only
+  info_merged <- driver_web_info_List_4.x$info
+
+  m_dwi_list <- split(
+    driver_web_info_merged,
+    driver_web_info_merged$version_tag
+  )
+
+  m_final_part <-lapply(
+    m_dwi_list,
+    function(x){
+      rst_webdriver_specific_finalizer(list(core = x), info_merged)
+    }
+  )
+
+  m_this_driver_info <-
+    do.call(rbind, lapply(m_final_part, `[[`,"this_driver_info"))
+  m_info <- info_merged
+
+  comb <- list(
+    this_driver_info = m_this_driver_info,
+    info = m_info,
+    all_driver_info = list(
+      core = driver_web_info_merged,
+      raw = list(
+        ver_3.x = driver_web_info_List_3.x,
+        ver_4.x = driver_web_info_List_4.x))
+  )
+
+  comb
+
+
+}
+
+# static for selenium 3.x
+rst_webdriver_specific_selenium_3.x <- function(offline_info = NULL){
+  # this is obsolete / pointing to stale source (no more update on this branch)
 
   info <- list(
     driver_url = "https://www.googleapis.com/storage/v1/b/selenium-release/o",
@@ -292,16 +486,18 @@ rst_webdriver_specific_selenium <- function(sver = "both", offline_info = NULL){
   do_offline <- FALSE
   if(is.data.frame(offline_info)){
     if(nrow(offline_info)>0){
+      # proper logic for each version is implemented in
+      # <rst_webdriver_specific_selenium>
       do_offline <- TRUE
       info$offline <- TRUE
     }
   }
+
   if(do_offline){
     driver_web_info <- rst_webdriver_url_parser(offline_info, offline = TRUE)
   }else{
     driver_web_info <- rst_webdriver_url_parser(info$driver_url)
   }
-
 
   driver_web_info$core <- driver_web_info$core[
     driver_web_info$core$appname == "selenium-server-standalone",
@@ -321,85 +517,33 @@ rst_webdriver_specific_selenium <- function(sver = "both", offline_info = NULL){
     )
   )
 
-  if(sver == "stable" | sver == "both"){
+  driver_web_info$core$is_dev <- grepl("[^0-9\\.]",driver_web_info$core$version)
 
-    # as on 06-01-2021
-    stablev_last_known <- numeric_version("3.141.59")
-    stablev <- numeric_version("3.141.59")
+  driver_web_info$core$major_version <- unlist(
+    lapply(
+      driver_web_info$core$version_num,
+      function(x) package_version(x)$major
+    )
+  )
 
-    if(!do_offline){
-      # very very bad approach need to clean up
-      #TODO
-      tryCatch({
-        # try to update
-        wc <- readLines("https://www.selenium.dev/downloads/", warn = FALSE)
-        wc <- tolower(wc)
-        wc <- wc[grepl("latest stable version", wc)]
-        # very bad way
-        stablev <-
-          numeric_version(
-            strsplit(
-              strsplit(
-                strsplit(
-                  wc,"latest stable version")[[1]][2],
-                "</a>")[[1]][1],
-              ">")[[1]][2]
-          )
-      },
-      error = function(e) NULL)
-    }
+  driver_web_info$core$version_tag <- paste0(
+    driver_web_info$core$major_version, ".x",
+    ifelse(driver_web_info$core$is_dev,"_dev","")
+  )
 
-    driver_web_info$core$for_this_browser <-
-      driver_web_info$core$version_num == stablev
+  driver_web_info$core$remarks <- driver_web_info$core$version_tag
 
-    driver_web_info$core$remarks <- "stable"
-
-    if(!any(driver_web_info$core$for_this_browser)){
-      # this should match 1
-      driver_web_info$core$for_this_browser <-
-        driver_web_info$core$version_num == stablev_last_known
-    }
-
-    # special case of sver == "both"
-    if(sver == "both"){
-      st <- rst_webdriver_specific_finalizer(driver_web_info, info)
-
-      driver_web_info$core$for_this_browser <- TRUE
-      lat <- rst_webdriver_specific_finalizer(driver_web_info, info)
-
-      lat$this_driver_info$remarks <- "dev"
-
-      comb <- list(
-        this_driver_info = unique(
-          rbind(
-            st$this_driver_info,
-            lat$this_driver_info
-          )),
-        info = st$info,
-        all_driver_info = st$all_driver_info
-      )
-      # early exit
-      return(comb)
-    }
-
-  }
-
-  if(sver == "dev"){
-    # pick latest
-    driver_web_info$core$for_this_browser <- TRUE
-    driver_web_info$core$remarks <- "dev"
-  }
-
-
-  rst_webdriver_specific_finalizer(driver_web_info, info)
-
+  list(
+    driver_web_info = driver_web_info,
+    info = info
+  )
 
 }
 
 #@Dev
 #TODO
 # new development for selenium 4.8
-rst_webdriver_specific_selenium_2023 <- function(sver = "new", offline_info = NULL){
+rst_webdriver_specific_selenium_4.x <- function(offline_info = NULL){
 
 
   info <- list(
@@ -410,11 +554,18 @@ rst_webdriver_specific_selenium_2023 <- function(sver = "new", offline_info = NU
   )
 
   do_offline <- FALSE
-  #TODO
+  if(is.data.frame(offline_info)){
+    if(nrow(offline_info)>0){
+      # proper logic for each version is implemented in
+      # <rst_webdriver_specific_selenium>
+      do_offline <- TRUE
+      info$offline <- TRUE
+    }
+  }
+
 
   if(do_offline){
-    stop("TODO")
-    #driver_web_info <- rst_webdriver_url_parser(offline_info, offline = TRUE)
+    driver_web_info <- rst_webdriver_url_parser(offline_info, offline = TRUE)
   }else{
     driver_web_info <- rst_webdriver_url_parser(info$driver_url)
   }
@@ -429,14 +580,17 @@ rst_webdriver_specific_selenium_2023 <- function(sver = "new", offline_info = NU
   driver_web_info$core <- driver_web_info$core[
     driver_web_info$core$appname_based_on_filename == "selenium-server",
   ]
+
   # early exit
   if(nrow(driver_web_info$core)==0) return(NULL)
 
-  # pick the latest
-  driver_web_info$core$for_this_browser <-
-    driver_web_info$core$time_idx==max(driver_web_info$core$time_idx)
+  driver_web_info$core$version_tag <- "4.x+"
+  driver_web_info$core$remarks <- driver_web_info$core$version_tag
 
-  rst_webdriver_specific_finalizer(driver_web_info, info)
 
+  list(
+    driver_web_info = driver_web_info,
+    info = info
+  )
 
 }

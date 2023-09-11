@@ -397,7 +397,7 @@ rst_webdriver_offline_info_feeder_from_binman <- function(info_dat){
     TRUE,
     sys_valid_os_string(info_dat$platform_tag)
   )
-  info_dat$file <- ifelse(info_dat$app=="seleniumserver",
+  info_dat$file <- ifelse(!info_dat$zip_present,
                           basename(info_dat$bin_file),
                           basename(info_dat$zip_file))
   info_dat$url <- NA

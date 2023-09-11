@@ -25,6 +25,8 @@ rst_webdriver_info <- function(){
   oi <- rst_webdriver_offline_info(this_sys_browsers)
   missing_browsers <- setdiff(names(this_sys_browsers), oi$browser_name_short)
   if(!any(grepl("selenium", oi$appname))){
+    # this means no selenium server is installed in this system
+    # adding this to donwload required selenium
     missing_browsers <- c(missing_browsers, "selenium")
   }
   ii <- rst_webdriver_online_info(missing_browsers)
@@ -55,33 +57,42 @@ rst_webdriver_online_offline_info_core <- function(browsers,
 
   if("chrome" %in% browsers | "all" %in% browsers){
     if("chrome" %in% names(this_system_browsers)){
-      info$chrome <- rst_webdriver_specific_chrome(
-        cver = this_system_browsers$chrome$installed_version,
-        offline_info = offline_info)
+      info$chrome <- tryCatch(
+        rst_webdriver_specific_chrome(
+          cver = this_system_browsers$chrome$installed_version,
+          offline_info = offline_info),
+        error = function(e) NULL
+      )
     }
   }
 
   if("firefox" %in% browsers | "all" %in% browsers){
     if("firefox" %in% names(this_system_browsers)){
-      info$firefox <- rst_webdriver_specific_firefox(
-        fver = this_system_browsers$firefox$installed_version,
-        offline_info = offline_info)
+      info$firefox <- tryCatch(
+        rst_webdriver_specific_firefox(
+          fver = this_system_browsers$firefox$installed_version,
+          offline_info = offline_info),
+        error = function(e) NULL)
     }
   }
 
   if("opera" %in% browsers | "all" %in% browsers){
     if("opera" %in% names(this_system_browsers)){
-      info$opera <- rst_webdriver_specific_opera(
-        over = this_system_browsers$opera$installed_version,
-        offline_info = offline_info)
+      info$opera <- tryCatch(
+        rst_webdriver_specific_opera(
+          over = this_system_browsers$opera$installed_version,
+          offline_info = offline_info),
+        error = function(e) NULL)
     }
   }
 
   if("edge" %in% browsers | "all" %in% browsers){
     if("edge" %in% names(this_system_browsers)){
-      info$edge <- rst_webdriver_specific_edge(
+      info$edge <- tryCatch(
+        rst_webdriver_specific_edge(
         ever = this_system_browsers$edge$installed_version,
-        offline_info = offline_info)
+        offline_info = offline_info),
+        error = function(e) NULL)
     }
   }
 
