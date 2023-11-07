@@ -54,7 +54,7 @@ rst_webdriver_url_parser <- function(src_url, offline = FALSE){
 
   # version fix
   all_plat$version <- gsub("[^0-9.]","",all_plat$version)
-  all_plat$version_num <- numeric_version(all_plat$version)
+  all_plat$version_num <- numeric_version(all_plat$version, strict = FALSE)
 
   all_plat$for_this_platform <- sys_valid_os_string(
     all_plat$platform_tag,
