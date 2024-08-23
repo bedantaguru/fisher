@@ -144,7 +144,11 @@ rst_wdman_selenium_launcher <- function(
   if("geckodriver" %in% webdrivers_offline$appname){
     if(bypass_wdman_detection){
 
-      stop("To Develop")
+      # @Dev
+      #stop("To Develop")
+      gver <- webdrivers_offline$version[
+        webdrivers_offline$appname=="geckodriver"
+      ]
 
     }else{
       gver <- webdrivers_offline$version[
