@@ -65,8 +65,13 @@ rst_remotedriver_specific_config_chromium <- function(
       browser = chromium_browser,
       arg_lst = list('--window-size=1280,800',
                      '--no-sandbox',
+                     '--guest',
+                     '--incognito',
+                     '--disable-extensions',
+                     '--disable-infobars',
                      '--ignore-certificate-errors',
                      '--disable-notifications',
+                     '--disable-dev-shm-usage',
                      '--disable-blink-features=AutomationControlled'),
       raw_lst = list(excludeSwitches = list("enable-automation"),
                      useAutomationExtension = FALSE))

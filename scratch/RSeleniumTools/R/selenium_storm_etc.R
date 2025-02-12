@@ -184,7 +184,7 @@ client_new <- function(Browser, headless, start_browser = T, ...){
 
   if(Browser=="chrome" & headless){
     eCaps <- list(chromeOptions = list(
-      args = c('--headless', '--disable-gpu', '--window-size=1280,800')
+      args = c('--headless', '--disable-gpu', '--window-size=1280,800','--incognito','--disable-extensions')
     ))
 
     remDr <- RSelenium::remoteDriver(browserName = Browser, port = as.integer(st$get("port", "config")), extraCapabilities = eCaps, ...)

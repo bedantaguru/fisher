@@ -522,7 +522,7 @@ rst_webdriver_specific_selenium_3.x <- function(offline_info = NULL){
   driver_web_info$core$major_version <- unlist(
     lapply(
       driver_web_info$core$version_num,
-      function(x) package_version(x)$major
+      function(x) package_version(as.character(x))$major
     )
   )
 
