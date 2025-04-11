@@ -21,8 +21,8 @@ rst_remotedriver <- function(
   headless = FALSE,
   # 1.4 Download folder
   download_capture = FALSE, download_folder = ".",
-  # 1.5 No password save options
-  no_credential_store_offer = TRUE,
+  # 1.5 No password save options or any notification /location etc
+  no_frills = TRUE,
   # 2. Additional configuration if required
   browser_config = NULL,
   # 3. Documented Arguments (whichever are configurable)
@@ -66,7 +66,7 @@ rst_remotedriver <- function(
                  headless = headless,
                  download_capture = download_capture,
                  download_folder = download_folder,
-                 no_credential_store_offer = no_credential_store_offer,
+                 no_frills = no_frills,
                  browser_config = browser_config,
                  remoteServerAddr = remoteServerAddr,
                  version = version,
@@ -110,7 +110,7 @@ rst_remotedriver <- function(
       best_known_settings = best_known_settings,
       headless = headless, download_capture = download_capture,
       download_folder = download_folder,
-      no_credential_store_offer = no_credential_store_offer)
+      no_frills = no_frills)
 
     ecaps <- tbs
 

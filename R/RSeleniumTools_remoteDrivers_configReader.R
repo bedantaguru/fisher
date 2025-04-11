@@ -13,7 +13,7 @@ rst_remotedriver_config_reader <- function(rd){
 
   bn <- x$browserName
 
-  if(bn == "msedge") bn <- "edge"
+  if(bn %in% c("msedge", "MicrosoftEdge")) bn <- "edge"
 
   l <- tryCatch({
     do.call(paste0("rst_remotedriver_config_reader_", bn),

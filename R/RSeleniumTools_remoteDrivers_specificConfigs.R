@@ -1,15 +1,15 @@
 
 rst_remotedriver_specific_config <- function(
-  browser,
-  # proxy
-  proxy = FALSE,
-  proxy_host = "localhost", proxy_port = 8888L,
-  best_known_settings = TRUE,
-  headless = FALSE,
-  # 1.4 Download folder
-  download_capture = FALSE, download_folder = ".",
-  # 1.5 No password save options
-  no_credential_store_offer = TRUE
+    browser,
+    # proxy
+    proxy = FALSE,
+    proxy_host = "localhost", proxy_port = 8888L,
+    best_known_settings = TRUE,
+    headless = FALSE,
+    # 1.4 Download folder
+    download_capture = FALSE, download_folder = ".",
+    # 1.5 No password save options
+    no_frills = TRUE
 ){
   do.call(
     paste0("rst_remotedriver_specific_config_",browser),
@@ -21,12 +21,12 @@ rst_remotedriver_specific_config <- function(
       headless = headless,
       download_capture = download_capture,
       download_folder = download_folder,
-      no_credential_store_offer = no_credential_store_offer))
+      no_frills = no_frills))
 }
 
 
 rst_remotedriver_specific_config_chromium <- function(
-  # proxy
+    # proxy
   proxy = FALSE,
   proxy_host = "localhost", proxy_port = 8888L,
   best_known_settings = TRUE,
@@ -34,7 +34,7 @@ rst_remotedriver_specific_config_chromium <- function(
   # 1.4 Download folder
   download_capture = FALSE, download_folder,
   # 1.5 No password save options
-  no_credential_store_offer = TRUE,
+  no_frills = TRUE,
   chromium_browser = "chrome"
 ){
 
@@ -61,18 +61,32 @@ rst_remotedriver_specific_config_chromium <- function(
     # https://github.com/ropensci/RSelenium/issues/207
     # https://stackoverflow.com/questions/57298901/
     #
+
+    if(download_capture){
+      arg_lst_and_incognito_flag <- list('--window-size=1280,800',
+                                         '--no-sandbox',
+                                         '--disable-extensions',
+                                         '--disable-infobars',
+                                         '--ignore-certificate-errors',
+                                         '--disable-notifications',
+                                         '--disable-dev-shm-usage',
+                                         '--disable-blink-features=AutomationControlled')
+    }else{
+      arg_lst_and_incognito_flag <- list('--window-size=1280,800',
+                                         '--no-sandbox',
+                                         '--guest',
+                                         '--incognito',
+                                         '--disable-extensions',
+                                         '--disable-infobars',
+                                         '--ignore-certificate-errors',
+                                         '--disable-notifications',
+                                         '--disable-dev-shm-usage',
+                                         '--disable-blink-features=AutomationControlled')
+    }
+
     bks  <- wap_browser_config_implementer(
       browser = chromium_browser,
-      arg_lst = list('--window-size=1280,800',
-                     '--no-sandbox',
-                     '--guest',
-                     '--incognito',
-                     '--disable-extensions',
-                     '--disable-infobars',
-                     '--ignore-certificate-errors',
-                     '--disable-notifications',
-                     '--disable-dev-shm-usage',
-                     '--disable-blink-features=AutomationControlled'),
+      arg_lst = arg_lst_and_incognito_flag,
       raw_lst = list(excludeSwitches = list("enable-automation"),
                      useAutomationExtension = FALSE))
 
@@ -95,21 +109,31 @@ rst_remotedriver_specific_config_chromium <- function(
 
   if(download_capture){
 
+    df <- normalizePath(download_folder, mustWork = FALSE)
+
+    if(!dir.exists(df)){
+      dir.create(df, showWarnings = FALSE, recursive = TRUE)
+    }
+
+    df <- normalizePath(download_folder, mustWork = TRUE)
+
     dl  <- wap_browser_config_implementer(
       browser = chromium_browser,
       conf_lst = list(
         savefile =
-          list(default_directory = normalizePath(download_folder)),
+          list(default_directory = df),
         download =
-          list(default_directory = normalizePath(download_folder),
-               prompt_for_download = FALSE))
+          list(default_directory = df,
+               prompt_for_download = FALSE,
+               directory_upgrade = TRUE),
+        directory_upgrade = TRUE)
 
     )
 
     cnf <- merge_list(cnf, dl)
   }
 
-  if(no_credential_store_offer){
+  if(no_frills){
 
     ncs  <- wap_browser_config_implementer(
       browser = chromium_browser,
@@ -117,10 +141,14 @@ rst_remotedriver_specific_config_chromium <- function(
         credentials_enable_service =
           FALSE,
         profile =
-          list(password_manager_enabled = FALSE,
-               default_content_setting_values = list(
-                 notifications = 2L
-               )))
+          list(
+            password_manager_enabled = FALSE,
+            default_content_setting_values = list(
+              notifications = 2L,
+              geolocation = 2L
+            )
+          )
+      )
 
     )
 
@@ -133,13 +161,13 @@ rst_remotedriver_specific_config_chromium <- function(
 }
 
 rst_remotedriver_specific_config_chrome <- function(
-  proxy = FALSE,
-  proxy_host = "localhost", proxy_port = 8888L,
-  best_known_settings = TRUE,
-  headless = FALSE,
-  # 1.4 Download folder
-  download_capture = FALSE, download_folder,
-  no_credential_store_offer = TRUE
+    proxy = FALSE,
+    proxy_host = "localhost", proxy_port = 8888L,
+    best_known_settings = TRUE,
+    headless = FALSE,
+    # 1.4 Download folder
+    download_capture = FALSE, download_folder,
+    no_frills = TRUE
 ){
   rst_remotedriver_specific_config_chromium(
     proxy = proxy,
@@ -148,19 +176,19 @@ rst_remotedriver_specific_config_chrome <- function(
     headless = headless,
     download_capture = download_capture,
     download_folder = download_folder,
-    no_credential_store_offer = no_credential_store_offer,
+    no_frills = no_frills,
     chromium_browser = "chrome"
   )
 }
 
 rst_remotedriver_specific_config_edge <- function(
-  proxy = FALSE,
-  proxy_host = "localhost", proxy_port = 8888L,
-  best_known_settings = TRUE,
-  headless = FALSE,
-  # 1.4 Download folder
-  download_capture = FALSE, download_folder,
-  no_credential_store_offer = TRUE
+    proxy = FALSE,
+    proxy_host = "localhost", proxy_port = 8888L,
+    best_known_settings = TRUE,
+    headless = FALSE,
+    # 1.4 Download folder
+    download_capture = FALSE, download_folder,
+    no_frills = TRUE
 ){
   rst_remotedriver_specific_config_chromium(
     proxy = proxy,
@@ -169,20 +197,20 @@ rst_remotedriver_specific_config_edge <- function(
     headless = headless,
     download_capture = download_capture,
     download_folder = download_folder,
-    no_credential_store_offer = no_credential_store_offer,
+    no_frills = no_frills,
     chromium_browser = "edge"
   )
 }
 
 rst_remotedriver_specific_config_opera <- function(
-  proxy = FALSE,
-  proxy_host = "localhost", proxy_port = 8888L,
-  best_known_settings = TRUE,
-  headless = FALSE,
-  # 1.4 Download folder
-  download_capture = FALSE, download_folder,
-  no_credential_store_offer = TRUE,
-  turn_on_inbuilt_VPN = FALSE
+    proxy = FALSE,
+    proxy_host = "localhost", proxy_port = 8888L,
+    best_known_settings = TRUE,
+    headless = FALSE,
+    # 1.4 Download folder
+    download_capture = FALSE, download_folder,
+    no_frills = TRUE,
+    turn_on_inbuilt_VPN = FALSE
 ){
   l <- rst_remotedriver_specific_config_chromium(
     proxy = proxy,
@@ -191,7 +219,7 @@ rst_remotedriver_specific_config_opera <- function(
     headless = headless,
     download_capture = download_capture,
     download_folder = download_folder,
-    no_credential_store_offer = no_credential_store_offer,
+    no_frills = no_frills,
     chromium_browser = "opera"
   )
 
@@ -217,7 +245,7 @@ rst_remotedriver_specific_config_opera <- function(
 }
 
 rst_remotedriver_specific_config_firefox <- function(
-  # proxy
+    # proxy
   proxy = FALSE,
   proxy_host = "localhost", proxy_port = 8888L,
   best_known_settings = TRUE,
@@ -225,7 +253,7 @@ rst_remotedriver_specific_config_firefox <- function(
   # 1.4 Download folder
   download_capture = FALSE, download_folder,
   # 1.5 No password save options
-  no_credential_store_offer = TRUE
+  no_frills = TRUE
 ){
 
   # ref
@@ -281,7 +309,7 @@ rst_remotedriver_specific_config_firefox <- function(
     cnf <- merge_list(cnf, dl)
   }
 
-  if(no_credential_store_offer){
+  if(no_frills){
 
     warning("Not implemented yet")
 

@@ -197,7 +197,7 @@ web_automation_platform <- function(
 #' web control client
 #'
 #' @export
-web_control_client <- function(browser, force_new = FALSE){
+web_control_client <- function(browser, force_new = FALSE, ...){
 
   # check prior saved client
 
@@ -232,6 +232,17 @@ web_control_client <- function(browser, force_new = FALSE){
     #@Dev
     #TODO
     shared_config$browser <- browser
+  }
+
+  if(!missing(...)){
+    cnfs <- list(...)
+    cnames <- intersect(names(cnfs), names(shared_config))
+    if(length(cnames)>0){
+      cnfs <- cnfs[cnames]
+      for(cn in cnames){
+        shared_config[[cn]] <- cnfs[[cn]]
+      }
+    }
   }
 
   rd <- do.call("rst_remotedriver", args = shared_config)
