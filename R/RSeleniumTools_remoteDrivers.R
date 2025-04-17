@@ -32,7 +32,9 @@ rst_remotedriver <- function(
   vanilla = FALSE,
   # 5. Pass config as list (which can be used later to call this function)
   get_config_list_only = FALSE,
-  # 6. Further argument
+  # 6. No running only arguments
+  no_run_only_args = FALSE,
+  # 7. Further argument
   ...
 ){
   # As per the documentation of remoteDriver-class {RSelenium} Documented
@@ -124,16 +126,36 @@ rst_remotedriver <- function(
   }
 
 
-  RSelenium::remoteDriver(
-    remoteServerAddr = remoteServerAddr,
-    port = rst_wdman_selenium_info_env$s_port,
-    browserName = rst_wsrcbn$browser_name_client[
-      rst_wsrcbn$browser_name_short==browser],
-    extraCapabilities = ecaps,
-    version = version,
-    platform = platform,
-    javascript = javascript,
-    ...)
+  if(no_run_only_args){
+
+    list(
+      func = RSelenium::remoteDriver,
+      args = list(
+        remoteServerAddr = remoteServerAddr,
+        port = rst_wdman_selenium_info_env$s_port,
+        browserName = rst_wsrcbn$browser_name_client[
+          rst_wsrcbn$browser_name_short==browser],
+        extraCapabilities = ecaps,
+        version = version,
+        platform = platform,
+        javascript = javascript
+      )
+    )
+
+  }else{
+
+    RSelenium::remoteDriver(
+      remoteServerAddr = remoteServerAddr,
+      port = rst_wdman_selenium_info_env$s_port,
+      browserName = rst_wsrcbn$browser_name_client[
+        rst_wsrcbn$browser_name_short==browser],
+      extraCapabilities = ecaps,
+      version = version,
+      platform = platform,
+      javascript = javascript,
+      ...)
+
+  }
 
 }
 

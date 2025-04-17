@@ -236,7 +236,9 @@ web_control_client <- function(browser, force_new = FALSE, ...){
 
   if(!missing(...)){
     cnfs <- list(...)
-    cnames <- intersect(names(cnfs), names(shared_config))
+    arg_names <- names(formals(rst_remotedriver))
+    allowed_names <- arg_names %>% setdiff("...") %>% union(names(shared_config)) %>% unique()
+    cnames <- intersect(names(cnfs), allowed_names)
     if(length(cnames)>0){
       cnfs <- cnfs[cnames]
       for(cn in cnames){
@@ -246,6 +248,13 @@ web_control_client <- function(browser, force_new = FALSE, ...){
   }
 
   rd <- do.call("rst_remotedriver", args = shared_config)
+
+  if(is.null(rd$open)){
+    # early return
+    warning("Early return for testing", call. = FALSE)
+    return(rd)
+  }
+
   if(is.null(psid)){
     # this means fresh sid need to be generated
     info <- rd$open(silent = TRUE)
