@@ -76,7 +76,7 @@ sys_get_a_port <- function(
   desired_port,
   port_range = c(1028L, 65000L),
   force  = FALSE,
-  kill_logic = function(){FALSE}){
+  kill_logic = function(port){FALSE}){
 
   # ref on port range
   # https://www.ibm.com/support/knowledgecenter/ssw_ibm_i_74/cl/addtcpport.htm
@@ -100,7 +100,7 @@ sys_get_a_port <- function(
 
       # try the logic whether to kill it or not
       if(!force){
-        force <- kill_logic()
+        force <- kill_logic(this_port)
       }
 
       if(force){

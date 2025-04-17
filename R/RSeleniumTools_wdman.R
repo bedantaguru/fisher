@@ -187,15 +187,17 @@ rst_wdman_selenium_launcher <- function(
 
   # desired port
   # match with below dport in force_kill_logic
-  dport <- 4567L
+  if(is.null(port)){
+    dport <- 4567L
+  }else{
+    dport <- as.integer(port)
+  }
+
 
   # sets arg `force` in sys_get_a_port as TRUE is some condition is met
   # otherwise FALSE
-  force_kill_logic <- function(){
-    # match this with above dport
-    dport <- 4567L
-
-    sys_is_port_running_selenium(dport)
+  force_kill_logic <- function(chk_port){
+    sys_is_port_running_selenium(chk_port)
   }
 
   sport <- sys_get_a_port(dport, kill_logic = force_kill_logic)
